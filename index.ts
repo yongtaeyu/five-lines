@@ -16,6 +16,13 @@ enum RawTile {
   KEY1, LOCK1,
   KEY2, LOCK2
 }
+/*
+  step 11 enum 사용
+*/
+enum FallingState{
+  FALLING, RESTING
+}
+
 
 
 /*
@@ -256,9 +263,9 @@ class FallingStone implements Tile{
 }
 class Box implements Tile{
   // falling 변수를 추가.
-  private falling:boolean = false;
+  private falling:FallingState;
   // 생성자 초기값 세팅
-  constructor(falling:boolean){
+  constructor(falling:FallingState){
     this.falling = falling;
   }
   isStoney(): boolean {
@@ -293,7 +300,7 @@ class Box implements Tile{
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
   isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return this.falling; }
+  isFALLING_BOX(): boolean { return this.falling == FallingState.FALLING; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
@@ -555,9 +562,9 @@ function transtormTile(tile: RawTile){
   switch(tile){
     case RawTile.AIR: return new Air();
     case RawTile.PLAYER: return new Player();
-    case RawTile.BOX: return new Box(false);
+    case RawTile.BOX: return new Box(FallingState.RESTING);
     case RawTile.UNBREAKABLE: return new Unbreakable();
-    case RawTile.FALLING_BOX: return new Box(true);
+    case RawTile.FALLING_BOX: return new Box(FallingState.FALLING);
     case RawTile.FALLING_STONE: return new FallingStone();
     case RawTile.STONE: return new Stone();
     case RawTile.LOCK1: return new Lock1();
@@ -650,12 +657,12 @@ function updateTile(x:number, y:number){
     map[y][x] = new Air();
   } else if (map[y][x].isBoxy()
     && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new Box(true);
+    map[y + 1][x] = new Box(FallingState.RESTING);
     map[y][x] = new Air();
   } else if (map[y][x].isFALLING_STONE()) {
     map[y][x] = new Stone();
   } else if (map[y][x].isFALLING_BOX()) {
-    map[y][x] = new Box(false);
+    map[y][x] = new Box(FallingState.FALLING);
   }
 }
 
