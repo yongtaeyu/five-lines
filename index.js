@@ -27,6 +27,12 @@ var RawTile;
 var Player = /** @class */ (function () {
     function Player() {
     }
+    Player.prototype.isStoney = function () {
+        return false;
+    };
+    Player.prototype.isBoxy = function () {
+        return false;
+    };
     Player.prototype.moveVertical = function (dy) {
     };
     Player.prototype.moveHorizontal = function (dx) {
@@ -43,9 +49,7 @@ var Player = /** @class */ (function () {
     Player.prototype.isAIR = function () { return false; };
     Player.prototype.isFLUX = function () { return false; };
     Player.prototype.isUNBREAKABLE = function () { return false; };
-    Player.prototype.isSTONE = function () { return false; };
     Player.prototype.isFALLING_STONE = function () { return false; };
-    Player.prototype.isBOX = function () { return false; };
     Player.prototype.isFALLING_BOX = function () { return false; };
     Player.prototype.isKEY1 = function () { return false; };
     Player.prototype.isKEY2 = function () { return false; };
@@ -56,6 +60,12 @@ var Player = /** @class */ (function () {
 var Air = /** @class */ (function () {
     function Air() {
     }
+    Air.prototype.isStoney = function () {
+        return false;
+    };
+    Air.prototype.isBoxy = function () {
+        return false;
+    };
     Air.prototype.moveVertical = function (dy) {
         moveToTile(playerx, playery + dy);
     };
@@ -74,9 +84,7 @@ var Air = /** @class */ (function () {
     Air.prototype.isAIR = function () { return true; };
     Air.prototype.isFLUX = function () { return false; };
     Air.prototype.isUNBREAKABLE = function () { return false; };
-    Air.prototype.isSTONE = function () { return false; };
     Air.prototype.isFALLING_STONE = function () { return false; };
-    Air.prototype.isBOX = function () { return false; };
     Air.prototype.isFALLING_BOX = function () { return false; };
     Air.prototype.isKEY1 = function () { return false; };
     Air.prototype.isKEY2 = function () { return false; };
@@ -87,6 +95,12 @@ var Air = /** @class */ (function () {
 var Unbreakable = /** @class */ (function () {
     function Unbreakable() {
     }
+    Unbreakable.prototype.isStoney = function () {
+        return false;
+    };
+    Unbreakable.prototype.isBoxy = function () {
+        return false;
+    };
     Unbreakable.prototype.moveVertical = function (dy) {
     };
     Unbreakable.prototype.moveHorizontal = function (dx) {
@@ -105,9 +119,7 @@ var Unbreakable = /** @class */ (function () {
     Unbreakable.prototype.isAIR = function () { return false; };
     Unbreakable.prototype.isFLUX = function () { return false; };
     Unbreakable.prototype.isUNBREAKABLE = function () { return true; };
-    Unbreakable.prototype.isSTONE = function () { return false; };
     Unbreakable.prototype.isFALLING_STONE = function () { return false; };
-    Unbreakable.prototype.isBOX = function () { return false; };
     Unbreakable.prototype.isFALLING_BOX = function () { return false; };
     Unbreakable.prototype.isKEY1 = function () { return false; };
     Unbreakable.prototype.isKEY2 = function () { return false; };
@@ -118,6 +130,12 @@ var Unbreakable = /** @class */ (function () {
 var Flux = /** @class */ (function () {
     function Flux() {
     }
+    Flux.prototype.isStoney = function () {
+        return false;
+    };
+    Flux.prototype.isBoxy = function () {
+        return false;
+    };
     Flux.prototype.moveVertical = function (dy) {
         moveToTile(playerx, playery + dy);
     };
@@ -138,9 +156,7 @@ var Flux = /** @class */ (function () {
     Flux.prototype.isAIR = function () { return false; };
     Flux.prototype.isFLUX = function () { return true; };
     Flux.prototype.isUNBREAKABLE = function () { return false; };
-    Flux.prototype.isSTONE = function () { return false; };
     Flux.prototype.isFALLING_STONE = function () { return false; };
-    Flux.prototype.isBOX = function () { return false; };
     Flux.prototype.isFALLING_BOX = function () { return false; };
     Flux.prototype.isKEY1 = function () { return false; };
     Flux.prototype.isKEY2 = function () { return false; };
@@ -151,6 +167,12 @@ var Flux = /** @class */ (function () {
 var Stone = /** @class */ (function () {
     function Stone() {
     }
+    Stone.prototype.isStoney = function () {
+        return true;
+    };
+    Stone.prototype.isBoxy = function () {
+        return false;
+    };
     Stone.prototype.moveVertical = function (dy) {
     };
     Stone.prototype.moveHorizontal = function (dx) {
@@ -174,9 +196,7 @@ var Stone = /** @class */ (function () {
     Stone.prototype.isAIR = function () { return false; };
     Stone.prototype.isFLUX = function () { return false; };
     Stone.prototype.isUNBREAKABLE = function () { return false; };
-    Stone.prototype.isSTONE = function () { return true; };
     Stone.prototype.isFALLING_STONE = function () { return false; };
-    Stone.prototype.isBOX = function () { return false; };
     Stone.prototype.isFALLING_BOX = function () { return false; };
     Stone.prototype.isKEY1 = function () { return false; };
     Stone.prototype.isKEY2 = function () { return false; };
@@ -187,6 +207,12 @@ var Stone = /** @class */ (function () {
 var FallingStone = /** @class */ (function () {
     function FallingStone() {
     }
+    FallingStone.prototype.isStoney = function () {
+        return true;
+    };
+    FallingStone.prototype.isBoxy = function () {
+        return false;
+    };
     FallingStone.prototype.moveVertical = function (dy) {
     };
     FallingStone.prototype.moveHorizontal = function (dx) {
@@ -205,9 +231,7 @@ var FallingStone = /** @class */ (function () {
     FallingStone.prototype.isAIR = function () { return false; };
     FallingStone.prototype.isFLUX = function () { return false; };
     FallingStone.prototype.isUNBREAKABLE = function () { return false; };
-    FallingStone.prototype.isSTONE = function () { return false; };
     FallingStone.prototype.isFALLING_STONE = function () { return true; };
-    FallingStone.prototype.isBOX = function () { return false; };
     FallingStone.prototype.isFALLING_BOX = function () { return false; };
     FallingStone.prototype.isKEY1 = function () { return false; };
     FallingStone.prototype.isKEY2 = function () { return false; };
@@ -218,6 +242,12 @@ var FallingStone = /** @class */ (function () {
 var Box = /** @class */ (function () {
     function Box() {
     }
+    Box.prototype.isStoney = function () {
+        return false;
+    };
+    Box.prototype.isBoxy = function () {
+        return true;
+    };
     Box.prototype.moveVertical = function (dy) {
     };
     Box.prototype.moveHorizontal = function (dx) {
@@ -241,9 +271,7 @@ var Box = /** @class */ (function () {
     Box.prototype.isAIR = function () { return false; };
     Box.prototype.isFLUX = function () { return false; };
     Box.prototype.isUNBREAKABLE = function () { return false; };
-    Box.prototype.isSTONE = function () { return false; };
     Box.prototype.isFALLING_STONE = function () { return false; };
-    Box.prototype.isBOX = function () { return true; };
     Box.prototype.isFALLING_BOX = function () { return false; };
     Box.prototype.isKEY1 = function () { return false; };
     Box.prototype.isKEY2 = function () { return false; };
@@ -254,6 +282,12 @@ var Box = /** @class */ (function () {
 var FallingBox = /** @class */ (function () {
     function FallingBox() {
     }
+    FallingBox.prototype.isStoney = function () {
+        return false;
+    };
+    FallingBox.prototype.isBoxy = function () {
+        return true;
+    };
     FallingBox.prototype.moveVertical = function (dy) {
     };
     FallingBox.prototype.moveHorizontal = function (dx) {
@@ -272,9 +306,7 @@ var FallingBox = /** @class */ (function () {
     FallingBox.prototype.isAIR = function () { return false; };
     FallingBox.prototype.isFLUX = function () { return false; };
     FallingBox.prototype.isUNBREAKABLE = function () { return false; };
-    FallingBox.prototype.isSTONE = function () { return false; };
     FallingBox.prototype.isFALLING_STONE = function () { return false; };
-    FallingBox.prototype.isBOX = function () { return false; };
     FallingBox.prototype.isFALLING_BOX = function () { return true; };
     FallingBox.prototype.isKEY1 = function () { return false; };
     FallingBox.prototype.isKEY2 = function () { return false; };
@@ -285,6 +317,12 @@ var FallingBox = /** @class */ (function () {
 var Key1 = /** @class */ (function () {
     function Key1() {
     }
+    Key1.prototype.isStoney = function () {
+        return false;
+    };
+    Key1.prototype.isBoxy = function () {
+        return false;
+    };
     Key1.prototype.moveVertical = function (dy) {
         removeLock1();
         moveToTile(playerx, playery + dy);
@@ -307,7 +345,7 @@ var Key1 = /** @class */ (function () {
     Key1.prototype.isAIR = function () { return false; };
     Key1.prototype.isFLUX = function () { return false; };
     Key1.prototype.isUNBREAKABLE = function () { return false; };
-    Key1.prototype.isSTONE = function () { return false; };
+    //isSTONE(): boolean { return false; }
     Key1.prototype.isFALLING_STONE = function () { return false; };
     Key1.prototype.isBOX = function () { return false; };
     Key1.prototype.isFALLING_BOX = function () { return false; };
@@ -320,6 +358,12 @@ var Key1 = /** @class */ (function () {
 var Key2 = /** @class */ (function () {
     function Key2() {
     }
+    Key2.prototype.isStoney = function () {
+        return false;
+    };
+    Key2.prototype.isBoxy = function () {
+        return false;
+    };
     Key2.prototype.moveVertical = function (dy) {
         removeLock2();
         moveToTile(playerx, playery + dy);
@@ -342,9 +386,7 @@ var Key2 = /** @class */ (function () {
     Key2.prototype.isAIR = function () { return false; };
     Key2.prototype.isFLUX = function () { return false; };
     Key2.prototype.isUNBREAKABLE = function () { return false; };
-    Key2.prototype.isSTONE = function () { return false; };
     Key2.prototype.isFALLING_STONE = function () { return false; };
-    Key2.prototype.isBOX = function () { return false; };
     Key2.prototype.isFALLING_BOX = function () { return false; };
     Key2.prototype.isKEY1 = function () { return false; };
     Key2.prototype.isKEY2 = function () { return true; };
@@ -355,6 +397,12 @@ var Key2 = /** @class */ (function () {
 var Lock1 = /** @class */ (function () {
     function Lock1() {
     }
+    Lock1.prototype.isStoney = function () {
+        return false;
+    };
+    Lock1.prototype.isBoxy = function () {
+        return false;
+    };
     Lock1.prototype.moveVertical = function (dy) {
     };
     Lock1.prototype.moveHorizontal = function (dx) {
@@ -373,9 +421,7 @@ var Lock1 = /** @class */ (function () {
     Lock1.prototype.isAIR = function () { return false; };
     Lock1.prototype.isFLUX = function () { return false; };
     Lock1.prototype.isUNBREAKABLE = function () { return false; };
-    Lock1.prototype.isSTONE = function () { return false; };
     Lock1.prototype.isFALLING_STONE = function () { return false; };
-    Lock1.prototype.isBOX = function () { return false; };
     Lock1.prototype.isFALLING_BOX = function () { return false; };
     Lock1.prototype.isKEY1 = function () { return false; };
     Lock1.prototype.isKEY2 = function () { return false; };
@@ -386,6 +432,12 @@ var Lock1 = /** @class */ (function () {
 var Lock2 = /** @class */ (function () {
     function Lock2() {
     }
+    Lock2.prototype.isStoney = function () {
+        return false;
+    };
+    Lock2.prototype.isBoxy = function () {
+        return false;
+    };
     Lock2.prototype.moveVertical = function (dy) {
     };
     Lock2.prototype.moveHorizontal = function (dx) {
@@ -404,9 +456,7 @@ var Lock2 = /** @class */ (function () {
     Lock2.prototype.isAIR = function () { return false; };
     Lock2.prototype.isFLUX = function () { return false; };
     Lock2.prototype.isUNBREAKABLE = function () { return false; };
-    Lock2.prototype.isSTONE = function () { return false; };
     Lock2.prototype.isFALLING_STONE = function () { return false; };
-    Lock2.prototype.isBOX = function () { return false; };
     Lock2.prototype.isFALLING_BOX = function () { return false; };
     Lock2.prototype.isKEY1 = function () { return false; };
     Lock2.prototype.isKEY2 = function () { return false; };
@@ -610,14 +660,15 @@ function updateMap() {
 }
 /*
   step 4 함수 중간에 있는 if문을 하나의 메소드로 분리
+  step 11 박스에 대한 공력
 */
 function updateTile(x, y) {
-    if ((map[y][x].isSTONE() || map[y][x].isFALLING_STONE())
+    if ((map[y][x].isStoney())
         && map[y + 1][x].isAIR()) {
         map[y + 1][x] = new FallingStone();
         map[y][x] = new Air();
     }
-    else if ((map[y][x].isBOX() || map[y][x].isFALLING_BOX())
+    else if (map[y][x].isBoxy()
         && map[y + 1][x].isAIR()) {
         map[y + 1][x] = new FallingBox();
         map[y][x] = new Air();
