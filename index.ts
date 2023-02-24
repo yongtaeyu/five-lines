@@ -18,11 +18,33 @@ enum RawTile {
 }
 /*
   step 11 enum 사용
-*/
 enum FallingState{
   FALLING, RESTING
 }
+*/
+// 인터페이스 FallingState 생성 
+interface FallingState{
+  isFalling(): boolean,
+  isResting(): boolean
+}
 
+// 클래스 생성.
+class Falling implements FallingState{
+  isFalling(): boolean {
+    return true;
+  }
+  isResting(): boolean {
+    return false;
+  }
+}
+class Resting implements FallingState{
+  isFalling(): boolean {
+    return false;
+  }
+  isResting(): boolean {
+    return true;
+  }
+}
 
 
 /*
@@ -300,7 +322,7 @@ class Box implements Tile{
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
   isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return this.falling == FallingState.FALLING; }
+  isFALLING_BOX(): boolean { return this.falling.isFalling() }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
@@ -562,9 +584,9 @@ function transtormTile(tile: RawTile){
   switch(tile){
     case RawTile.AIR: return new Air();
     case RawTile.PLAYER: return new Player();
-    case RawTile.BOX: return new Box(FallingState.RESTING);
+    case RawTile.BOX: return new Box(new Resting());
     case RawTile.UNBREAKABLE: return new Unbreakable();
-    case RawTile.FALLING_BOX: return new Box(FallingState.FALLING);
+    case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FALLING_STONE: return new FallingStone();
     case RawTile.STONE: return new Stone();
     case RawTile.LOCK1: return new Lock1();
@@ -657,12 +679,12 @@ function updateTile(x:number, y:number){
     map[y][x] = new Air();
   } else if (map[y][x].isBoxy()
     && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new Box(FallingState.RESTING);
+    map[y + 1][x] = new Box(new Resting());
     map[y][x] = new Air();
   } else if (map[y][x].isFALLING_STONE()) {
     map[y][x] = new Stone();
   } else if (map[y][x].isFALLING_BOX()) {
-    map[y][x] = new Box(FallingState.FALLING);
+    map[y][x] = new Box(new Falling());
   }
 }
 
