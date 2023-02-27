@@ -51,6 +51,26 @@ var Resting = /** @class */ (function () {
     };
     return Resting;
 }());
+// 새로운 클래스 생성.
+var FallStrategy = /** @class */ (function () {
+    function FallStrategy(falling) {
+        this.falling = falling;
+    }
+    FallStrategy.prototype.update = function (tile, x, y) {
+        this.falling = map[y + 1][x].isAIR() ? new Falling() : new Resting();
+        this.drop(tile, x, y);
+    };
+    FallStrategy.prototype.getFalling = function () {
+        return this.falling;
+    };
+    FallStrategy.prototype.drop = function (tile, x, y) {
+        if (this.falling.isFalling()) {
+            map[y + 1][x] = tile;
+            map[y][x] = new Air();
+        }
+    };
+    return FallStrategy;
+}());
 /*
   클래스들 생성.
   메서드 전문화
@@ -63,10 +83,6 @@ var Player = /** @class */ (function () {
     };
     Player.prototype.isFalling = function () {
         return false;
-    };
-    Player.prototype.drop = function () {
-    };
-    Player.prototype.rest = function () {
     };
     Player.prototype.moveVertical = function (dy) {
     };
@@ -97,10 +113,6 @@ var Air = /** @class */ (function () {
     };
     Air.prototype.isFalling = function () {
         return false;
-    };
-    Air.prototype.drop = function () {
-    };
-    Air.prototype.rest = function () {
     };
     Air.prototype.moveVertical = function (dy) {
         moveToTile(playerx, playery + dy);
@@ -133,10 +145,6 @@ var Unbreakable = /** @class */ (function () {
     };
     Unbreakable.prototype.isFalling = function () {
         return false;
-    };
-    Unbreakable.prototype.drop = function () {
-    };
-    Unbreakable.prototype.rest = function () {
     };
     Unbreakable.prototype.moveVertical = function (dy) {
     };
@@ -203,31 +211,17 @@ var Flux = /** @class */ (function () {
 var Stone = /** @class */ (function () {
     // 생성자 초기값 세팅
     function Stone(falling) {
-        this.falling = falling;
+        this.fallStrategy = new FallStrategy(falling);
     }
     Stone.prototype.updateTile = function (x, y) {
-        if (map[y + 1][x].isAIR()) {
-            map[y][x].drop();
-            map[y + 1][x] = map[y][x];
-            map[y][x] = new Air();
-        }
-        else if (map[y][x].isFalling()) {
-            map[y][x].rest();
-        }
-    };
-    Stone.prototype.isFalling = function () {
-        return this.falling.isFalling();
-    };
-    Stone.prototype.drop = function () {
-        this.falling = new Falling();
-    };
-    Stone.prototype.rest = function () {
-        this.falling = new Resting();
+        this.fallStrategy.update(this, x, y);
     };
     Stone.prototype.moveVertical = function (dy) {
     };
     Stone.prototype.moveHorizontal = function (dx) {
-        this.falling.moveHorizontal(this, dx);
+        this.fallStrategy
+            .getFalling()
+            .moveHorizontal(this, dx);
     };
     Stone.prototype.isEdible = function () {
         return false;
@@ -252,26 +246,10 @@ var Stone = /** @class */ (function () {
 var Box = /** @class */ (function () {
     // 생성자 초기값 세팅
     function Box(falling) {
-        this.falling = falling;
+        this.fallStrategy = new FallStrategy(falling);
     }
     Box.prototype.updateTile = function (x, y) {
-        if (map[y + 1][x].isAIR()) {
-            map[y][x].drop();
-            map[y + 1][x] = map[y][x];
-            map[y][x] = new Air();
-        }
-        else if (map[y][x].isFalling()) {
-            map[y][x].rest();
-        }
-    };
-    Box.prototype.isFalling = function () {
-        return this.falling.isFalling();
-    };
-    Box.prototype.drop = function () {
-        this.falling = new Falling();
-    };
-    Box.prototype.rest = function () {
-        this.falling = new Resting();
+        this.fallStrategy.update(this, x, y);
     };
     Box.prototype.isStoney = function () {
         return false;
@@ -282,7 +260,9 @@ var Box = /** @class */ (function () {
     Box.prototype.moveVertical = function (dy) {
     };
     Box.prototype.moveHorizontal = function (dx) {
-        this.falling.moveHorizontal(this, dx);
+        this.fallStrategy
+            .getFalling()
+            .moveHorizontal(this, dx);
     };
     Box.prototype.isEdible = function () {
         return false;
@@ -308,13 +288,6 @@ var Key1 = /** @class */ (function () {
     function Key1() {
     }
     Key1.prototype.updateTile = function (x, y) {
-    };
-    Key1.prototype.isFalling = function () {
-        return false;
-    };
-    Key1.prototype.drop = function () {
-    };
-    Key1.prototype.rest = function () {
     };
     Key1.prototype.isStoney = function () {
         return false;
@@ -355,13 +328,6 @@ var Key2 = /** @class */ (function () {
     }
     Key2.prototype.updateTile = function (x, y) {
     };
-    Key2.prototype.isFalling = function () {
-        return false;
-    };
-    Key2.prototype.drop = function () {
-    };
-    Key2.prototype.rest = function () {
-    };
     Key2.prototype.isStoney = function () {
         return false;
     };
@@ -401,13 +367,6 @@ var Lock1 = /** @class */ (function () {
     }
     Lock1.prototype.updateTile = function (x, y) {
     };
-    Lock1.prototype.isFalling = function () {
-        return false;
-    };
-    Lock1.prototype.drop = function () {
-    };
-    Lock1.prototype.rest = function () {
-    };
     Lock1.prototype.isStoney = function () {
         return false;
     };
@@ -443,13 +402,6 @@ var Lock2 = /** @class */ (function () {
     }
     Lock2.prototype.updateTile = function (x, y) {
     };
-    Lock2.prototype.isFalling = function () {
-        return false;
-    };
-    Lock2.prototype.drop = function () {
-    };
-    Lock2.prototype.rest = function () {
-    };
     Lock2.prototype.isStoney = function () {
         return false;
     };
@@ -479,12 +431,6 @@ var Lock2 = /** @class */ (function () {
     Lock2.prototype.isLOCK1 = function () { return false; };
     Lock2.prototype.isLOCK2 = function () { return true; };
     return Lock2;
-}());
-// 새로운 클래스 생성.
-var FallStrategy = /** @class */ (function () {
-    function FallStrategy() {
-    }
-    return FallStrategy;
 }());
 /*
   input -> RawInput 으로 변경.

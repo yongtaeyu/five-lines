@@ -16,15 +16,6 @@ enum RawTile {
   KEY1, LOCK1,
   KEY2, LOCK2
 }
-/*
-step 11 enum 사용
-enum FallingState{
-  FALLING, RESTING
-}
-인터페이스 FallingState 생성 
-moveHorizontal(tile:Tile, dx: number): void 이동
-stone 적용.
-*/
 interface FallingState{
   isFalling(): boolean,
   isResting(): boolean,
@@ -86,11 +77,33 @@ interface Tile{
   isPushaBle(): boolean,
   moveHorizontal(dx:number):void,
   moveVertical(dy:number):void,
-  drop():void,
-  rest():void,
-  isFalling():boolean,
   updateTile(x:number, y:number):void
 }
+
+
+// 새로운 클래스 생성.
+class FallStrategy {
+
+  private falling:FallingState;
+  constructor(falling:FallingState){
+    this.falling = falling;
+  }
+
+  update(tile:Tile, x:number, y:number){
+    this.falling = map[y + 1][x].isAIR()?new Falling():new Resting();
+    this.drop(tile,x,y); 
+  }
+  getFalling(){
+    return this.falling;
+  }
+  drop(tile:Tile, x:number,y:number ){
+    if(this.falling.isFalling()){
+      map[y + 1][x] = tile;
+      map[y][x] = new Air();
+    }
+  }
+}
+
 
 /*
   클래스들 생성.
@@ -102,10 +115,6 @@ class Player implements Tile{
   }
   isFalling(): boolean {
     return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
   }
   moveVertical(dy: number): void {
   }
@@ -133,10 +142,6 @@ class Air implements Tile{
   }
   isFalling(): boolean {
     return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
   }
   moveVertical(dy: number): void {
     moveToTile(playerx, playery + dy);
@@ -166,10 +171,6 @@ class Unbreakable implements Tile{
   }
   isFalling(): boolean {
     return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
   }
   moveVertical(dy: number): void {
   }
@@ -231,33 +232,20 @@ class Flux implements Tile{
 }
 class Stone implements Tile{
   // falling 변수를 추가.
-  private falling:FallingState;
+  private fallStrategy:FallStrategy;
   // 생성자 초기값 세팅
   constructor(falling:FallingState){
-    this.falling = falling;
+    this.fallStrategy = new FallStrategy(falling);
   }
   updateTile(x: number, y: number): void {
-    if( map[y + 1][x].isAIR()) {
-      map[y][x].drop();
-      map[y + 1][x] = map[y][x];
-      map[y][x] = new Air();
-    } else if (map[y][x].isFalling()) {
-      map[y][x].rest();
-    }
-  }
-  isFalling(): boolean {
-    return this.falling.isFalling();
-  }
-  drop(): void {
-    this.falling = new Falling();
-  }
-  rest(): void {
-    this.falling = new Resting();
+    this.fallStrategy.update(this, x,y);
   }
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    this.falling.moveHorizontal(this, dx);
+    this.fallStrategy
+      .getFalling()
+      .moveHorizontal(this, dx);
   }
   isEdible(): boolean {
     return false;
@@ -280,28 +268,13 @@ class Stone implements Tile{
 }
 class Box implements Tile{
   // falling 변수를 추가.
-  private falling:FallingState;
+  private fallStrategy:FallStrategy;
   // 생성자 초기값 세팅
   constructor(falling:FallingState){
-    this.falling = falling;
+    this.fallStrategy = new FallStrategy(falling);
   }
   updateTile(x: number, y: number): void {
-    if(map[y + 1][x].isAIR()) {
-      map[y][x].drop();
-      map[y + 1][x] = map[y][x];
-      map[y][x] = new Air();
-    } else if (map[y][x].isFalling()) {
-      map[y][x].rest();
-    }
-  }
-  isFalling(): boolean {
-    return this.falling.isFalling();
-  }
-  drop(): void {
-    this.falling = new Falling();
-  }
-  rest(): void {
-    this.falling = new Resting();
+    this.fallStrategy.update(this, x,y);
   }
   isStoney(): boolean {
     return false;
@@ -312,7 +285,9 @@ class Box implements Tile{
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    this.falling.moveHorizontal(this, dx);
+    this.fallStrategy
+      .getFalling()
+      .moveHorizontal(this, dx);
   }
 
   isEdible(): boolean {
@@ -336,13 +311,6 @@ class Box implements Tile{
 }
 class Key1 implements Tile{
   updateTile(x: number, y: number): void {
-  }
-  isFalling(): boolean {
-    return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
   }
   isStoney(): boolean {
     return false;
@@ -380,13 +348,6 @@ class Key1 implements Tile{
 class Key2 implements Tile{
   updateTile(x: number, y: number): void {
   }
-  isFalling(): boolean {
-    return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
-  }
   isStoney(): boolean {
     return false;
   }
@@ -423,13 +384,6 @@ class Key2 implements Tile{
 class Lock1 implements Tile{
   updateTile(x: number, y: number): void {
   }
-  isFalling(): boolean {
-    return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
-  }
   isStoney(): boolean {
     return false;
   }
@@ -462,13 +416,6 @@ class Lock1 implements Tile{
 class Lock2 implements Tile{
   updateTile(x: number, y: number): void {
   }
-  isFalling(): boolean {
-    return false;
-  }
-  drop(): void {
-  }
-  rest(): void {
-  }
   isStoney(): boolean {
     return false;
   }
@@ -498,13 +445,6 @@ class Lock2 implements Tile{
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return true; }
 }
-
-// 새로운 클래스 생성.
-class FallStrategy{
-}
-
-
-
 
 
 /*
