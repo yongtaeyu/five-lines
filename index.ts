@@ -58,7 +58,6 @@ class Resting implements FallingState{
   }
 }
 
-
 /*
   step 7 인터페이스로 변경.
          Tile2 -> Tile2 이름 변경.
@@ -78,8 +77,6 @@ interface Tile{
   isAIR():boolean,
   isFLUX(): boolean,  
   isUNBREAKABLE(): boolean,  
-  isFALLING_STONE(): boolean,  
-  isFALLING_BOX(): boolean,  
   isKEY1(): boolean,  
   isKEY2(): boolean,  
   isLOCK1(): boolean,  
@@ -90,7 +87,11 @@ interface Tile{
   moveHorizontal(dx:number):void,
   moveVertical(dy:number):void,
   isStoney():boolean,
-  isBoxy():boolean
+  isBoxy():boolean,
+
+  drop():void,
+  rest():void,
+  isFalling():boolean
 }
 
 /*
@@ -99,6 +100,13 @@ interface Tile{
   step 11 복잡한 if 체인 구문 리팩터링
 */
 class Player implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -110,10 +118,10 @@ class Player implements Tile{
   moveHorizontal(dx: number): void {
   }
   isEdible(): boolean {
-    throw new Error("Method not implemented.");
+    return false;
   }
   isPushaBle(): boolean {
-    throw new Error("Method not implemented.");
+    return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
   }
@@ -121,14 +129,19 @@ class Player implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Air implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -153,14 +166,19 @@ class Air implements Tile{
   isAIR(): boolean { return true;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Unbreakable implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -185,14 +203,19 @@ class Unbreakable implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return true;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Flux implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -219,8 +242,6 @@ class Flux implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return true;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
@@ -232,6 +253,15 @@ class Stone implements Tile{
   // 생성자 초기값 세팅
   constructor(falling:FallingState){
     this.falling = falling;
+  }
+  isFalling(): boolean {
+    return this.falling.isFalling();
+  }
+  drop(): void {
+    this.falling = new Falling();
+  }
+  rest(): void {
+    this.falling = new Resting();
   }
   isStoney(): boolean {
     return true;
@@ -258,8 +288,6 @@ class Stone implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return this.falling.isFalling();  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
@@ -271,6 +299,15 @@ class Box implements Tile{
   // 생성자 초기값 세팅
   constructor(falling:FallingState){
     this.falling = falling;
+  }
+  isFalling(): boolean {
+    return this.falling.isFalling();
+  }
+  drop(): void {
+    this.falling = new Falling();
+  }
+  rest(): void {
+    this.falling = new Resting();
   }
   isStoney(): boolean {
     return false;
@@ -298,14 +335,19 @@ class Box implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return this.falling.isFalling() }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Key1 implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -334,16 +376,19 @@ class Key1 implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  //isSTONE(): boolean { return false; }
-  isFALLING_STONE(): boolean { return false;  }
-  isBOX(): boolean { return false; }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return true; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Key2 implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -372,14 +417,19 @@ class Key2 implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return true; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
 class Lock1 implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -404,14 +454,19 @@ class Lock1 implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return true; }
   isLOCK2(): boolean { return false; }
 }
 class Lock2 implements Tile{
+  isFalling(): boolean {
+    return false;
+  }
+  drop(): void {
+  }
+  rest(): void {
+  }
   isStoney(): boolean {
     return false;
   }
@@ -436,8 +491,6 @@ class Lock2 implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
@@ -655,12 +708,10 @@ function updateTile(x:number, y:number){
     map[y][x] = new Air();
   } else if (map[y][x].isBoxy()
     && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new Box(new Resting());
+    map[y + 1][x] = new Box(new Falling());
     map[y][x] = new Air();
-  } else if (map[y][x].isFALLING_STONE()) {
-    map[y][x] = new Stone(new Resting());
-  } else if (map[y][x].isFALLING_BOX()) {
-    map[y][x] = new Box(new Falling());
+  } else if (map[y][x].isFalling()) {
+    map[y][x].rest();
   }
 }
 
