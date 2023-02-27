@@ -59,18 +59,14 @@ var Resting = /** @class */ (function () {
 var Player = /** @class */ (function () {
     function Player() {
     }
+    Player.prototype.updateTile = function (x, y) {
+    };
     Player.prototype.isFalling = function () {
         return false;
     };
     Player.prototype.drop = function () {
     };
     Player.prototype.rest = function () {
-    };
-    Player.prototype.isStoney = function () {
-        return false;
-    };
-    Player.prototype.isBoxy = function () {
-        return false;
     };
     Player.prototype.moveVertical = function (dy) {
     };
@@ -97,18 +93,14 @@ var Player = /** @class */ (function () {
 var Air = /** @class */ (function () {
     function Air() {
     }
+    Air.prototype.updateTile = function (x, y) {
+    };
     Air.prototype.isFalling = function () {
         return false;
     };
     Air.prototype.drop = function () {
     };
     Air.prototype.rest = function () {
-    };
-    Air.prototype.isStoney = function () {
-        return false;
-    };
-    Air.prototype.isBoxy = function () {
-        return false;
     };
     Air.prototype.moveVertical = function (dy) {
         moveToTile(playerx, playery + dy);
@@ -137,18 +129,14 @@ var Air = /** @class */ (function () {
 var Unbreakable = /** @class */ (function () {
     function Unbreakable() {
     }
+    Unbreakable.prototype.updateTile = function (x, y) {
+    };
     Unbreakable.prototype.isFalling = function () {
         return false;
     };
     Unbreakable.prototype.drop = function () {
     };
     Unbreakable.prototype.rest = function () {
-    };
-    Unbreakable.prototype.isStoney = function () {
-        return false;
-    };
-    Unbreakable.prototype.isBoxy = function () {
-        return false;
     };
     Unbreakable.prototype.moveVertical = function (dy) {
     };
@@ -177,18 +165,14 @@ var Unbreakable = /** @class */ (function () {
 var Flux = /** @class */ (function () {
     function Flux() {
     }
+    Flux.prototype.updateTile = function (x, y) {
+    };
     Flux.prototype.isFalling = function () {
         return false;
     };
     Flux.prototype.drop = function () {
     };
     Flux.prototype.rest = function () {
-    };
-    Flux.prototype.isStoney = function () {
-        return false;
-    };
-    Flux.prototype.isBoxy = function () {
-        return false;
     };
     Flux.prototype.moveVertical = function (dy) {
         moveToTile(playerx, playery + dy);
@@ -221,6 +205,16 @@ var Stone = /** @class */ (function () {
     function Stone(falling) {
         this.falling = falling;
     }
+    Stone.prototype.updateTile = function (x, y) {
+        if (map[y + 1][x].isAIR()) {
+            map[y][x].drop();
+            map[y + 1][x] = map[y][x];
+            map[y][x] = new Air();
+        }
+        else if (map[y][x].isFalling()) {
+            map[y][x].rest();
+        }
+    };
     Stone.prototype.isFalling = function () {
         return this.falling.isFalling();
     };
@@ -229,12 +223,6 @@ var Stone = /** @class */ (function () {
     };
     Stone.prototype.rest = function () {
         this.falling = new Resting();
-    };
-    Stone.prototype.isStoney = function () {
-        return true;
-    };
-    Stone.prototype.isBoxy = function () {
-        return false;
     };
     Stone.prototype.moveVertical = function (dy) {
     };
@@ -266,6 +254,16 @@ var Box = /** @class */ (function () {
     function Box(falling) {
         this.falling = falling;
     }
+    Box.prototype.updateTile = function (x, y) {
+        if (map[y + 1][x].isAIR()) {
+            map[y][x].drop();
+            map[y + 1][x] = map[y][x];
+            map[y][x] = new Air();
+        }
+        else if (map[y][x].isFalling()) {
+            map[y][x].rest();
+        }
+    };
     Box.prototype.isFalling = function () {
         return this.falling.isFalling();
     };
@@ -309,6 +307,8 @@ var Box = /** @class */ (function () {
 var Key1 = /** @class */ (function () {
     function Key1() {
     }
+    Key1.prototype.updateTile = function (x, y) {
+    };
     Key1.prototype.isFalling = function () {
         return false;
     };
@@ -353,6 +353,8 @@ var Key1 = /** @class */ (function () {
 var Key2 = /** @class */ (function () {
     function Key2() {
     }
+    Key2.prototype.updateTile = function (x, y) {
+    };
     Key2.prototype.isFalling = function () {
         return false;
     };
@@ -397,6 +399,8 @@ var Key2 = /** @class */ (function () {
 var Lock1 = /** @class */ (function () {
     function Lock1() {
     }
+    Lock1.prototype.updateTile = function (x, y) {
+    };
     Lock1.prototype.isFalling = function () {
         return false;
     };
@@ -437,6 +441,8 @@ var Lock1 = /** @class */ (function () {
 var Lock2 = /** @class */ (function () {
     function Lock2() {
     }
+    Lock2.prototype.updateTile = function (x, y) {
+    };
     Lock2.prototype.isFalling = function () {
         return false;
     };
@@ -473,6 +479,12 @@ var Lock2 = /** @class */ (function () {
     Lock2.prototype.isLOCK1 = function () { return false; };
     Lock2.prototype.isLOCK2 = function () { return true; };
     return Lock2;
+}());
+// 새로운 클래스 생성.
+var FallStrategy = /** @class */ (function () {
+    function FallStrategy() {
+    }
+    return FallStrategy;
 }());
 /*
   input -> RawInput 으로 변경.
@@ -664,27 +676,8 @@ function handleInputs() {
 function updateMap() {
     for (var y = map.length - 1; y >= 0; y--) {
         for (var x = 0; x < map[y].length; x++) {
-            updateTile(x, y);
+            map[y][x].updateTile(x, y);
         }
-    }
-}
-/*
-  step 4 함수 중간에 있는 if문을 하나의 메소드로 분리
-  step 11 박스에 대한 공력
-*/
-function updateTile(x, y) {
-    if ((map[y][x].isStoney())
-        && map[y + 1][x].isAIR()) {
-        map[y + 1][x] = new Stone(new Falling());
-        map[y][x] = new Air();
-    }
-    else if (map[y][x].isBoxy()
-        && map[y + 1][x].isAIR()) {
-        map[y + 1][x] = new Box(new Falling());
-        map[y][x] = new Air();
-    }
-    else if (map[y][x].isFalling()) {
-        map[y][x].rest();
     }
 }
 function draw() {

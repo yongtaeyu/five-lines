@@ -86,12 +86,10 @@ interface Tile{
   isPushaBle(): boolean,
   moveHorizontal(dx:number):void,
   moveVertical(dy:number):void,
-  isStoney():boolean,
-  isBoxy():boolean,
-
   drop():void,
   rest():void,
-  isFalling():boolean
+  isFalling():boolean,
+  updateTile(x:number, y:number):void
 }
 
 /*
@@ -100,18 +98,14 @@ interface Tile{
   step 11 복잡한 if 체인 구문 리팩터링
 */
 class Player implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
   drop(): void {
   }
   rest(): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
   }
   moveVertical(dy: number): void {
   }
@@ -135,18 +129,14 @@ class Player implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Air implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
   drop(): void {
   }
   rest(): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
   }
   moveVertical(dy: number): void {
     moveToTile(playerx, playery + dy);
@@ -172,18 +162,14 @@ class Air implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Unbreakable implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
   drop(): void {
   }
   rest(): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
   }
   moveVertical(dy: number): void {
   }
@@ -209,18 +195,14 @@ class Unbreakable implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Flux implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
   drop(): void {
   }
   rest(): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
   }
   moveVertical(dy: number): void {
     moveToTile(playerx, playery + dy);
@@ -254,6 +236,15 @@ class Stone implements Tile{
   constructor(falling:FallingState){
     this.falling = falling;
   }
+  updateTile(x: number, y: number): void {
+    if( map[y + 1][x].isAIR()) {
+      map[y][x].drop();
+      map[y + 1][x] = map[y][x];
+      map[y][x] = new Air();
+    } else if (map[y][x].isFalling()) {
+      map[y][x].rest();
+    }
+  }
   isFalling(): boolean {
     return this.falling.isFalling();
   }
@@ -262,12 +253,6 @@ class Stone implements Tile{
   }
   rest(): void {
     this.falling = new Resting();
-  }
-  isStoney(): boolean {
-    return true;
-  }
-  isBoxy(): boolean {
-    return false;
   }
   moveVertical(dy: number): void {
   }
@@ -299,6 +284,15 @@ class Box implements Tile{
   // 생성자 초기값 세팅
   constructor(falling:FallingState){
     this.falling = falling;
+  }
+  updateTile(x: number, y: number): void {
+    if(map[y + 1][x].isAIR()) {
+      map[y][x].drop();
+      map[y + 1][x] = map[y][x];
+      map[y][x] = new Air();
+    } else if (map[y][x].isFalling()) {
+      map[y][x].rest();
+    }
   }
   isFalling(): boolean {
     return this.falling.isFalling();
@@ -341,6 +335,8 @@ class Box implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Key1 implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
@@ -382,6 +378,8 @@ class Key1 implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Key2 implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
@@ -423,6 +421,8 @@ class Key2 implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Lock1 implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
@@ -460,6 +460,8 @@ class Lock1 implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Lock2 implements Tile{
+  updateTile(x: number, y: number): void {
+  }
   isFalling(): boolean {
     return false;
   }
@@ -496,6 +498,15 @@ class Lock2 implements Tile{
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return true; }
 }
+
+// 새로운 클래스 생성.
+class FallStrategy{
+}
+
+
+
+
+
 /*
   input -> RawInput 으로 변경.
 */
@@ -693,25 +704,8 @@ function handleInputs(){
 function updateMap(){
   for (let y = map.length - 1; y >= 0; y--) {
     for (let x = 0; x < map[y].length; x++) {
-      updateTile(x,y);
+      map[y][x].updateTile(x,y);
     }
-  }
-}
-/*
-  step 4 함수 중간에 있는 if문을 하나의 메소드로 분리
-  step 11 박스에 대한 공력
-*/
-function updateTile(x:number, y:number){
-  if ((map[y][x].isStoney())
-    && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new Stone(new Falling());
-    map[y][x] = new Air();
-  } else if (map[y][x].isBoxy()
-    && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new Box(new Falling());
-    map[y][x] = new Air();
-  } else if (map[y][x].isFalling()) {
-    map[y][x].rest();
   }
 }
 
