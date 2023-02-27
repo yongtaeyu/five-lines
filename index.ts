@@ -319,11 +319,11 @@ class Key1 implements Tile{
     return false;
   }
   moveVertical(dy: number): void {
-    removeLock1();
+    removeLock(new RemoveLock1());
     moveToTile(playerx, playery + dy);
   }
   moveHorizontal(dx: number): void {
-    removeLock1();
+    removeLock(new RemoveLock1());
     moveToTile(playerx + dx, playery);
   }
   isEdible(): boolean {
@@ -355,11 +355,11 @@ class Key2 implements Tile{
     return false;
   }
   moveVertical(dy: number): void {
-    removeLock2();
+    removeLock(new RemoveLock2());
     moveToTile(playerx, playery + dy);
   }
   moveHorizontal(dx: number): void {
-    removeLock2();
+    removeLock(new RemoveLock2());
     moveToTile(playerx + dx, playery);
   }
   isEdible(): boolean {
@@ -587,25 +587,32 @@ function transtormMap(){
   }
 }
 
-function removeLock1() {
+function removeLock(removeStrategy:RemoveStrategy) {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x].isLOCK1()) {
+      if (removeStrategy.check(map[y][x])) {
         map[y][x] = new Air();
       }
     }
   }
 }
-function removeLock2() {
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x].isLOCK2()) {
-        map[y][x] = new Air();
-      }
-    }
-  }
+// 인터페이스 생성
+interface RemoveStrategy{
+  check(tile:Tile):boolean;
 }
 
+// 클래스 생성
+class RemoveLock1 implements RemoveStrategy{
+  check(tile: Tile): boolean {
+    return tile.isLOCK1();
+  }
+}
+// 클래스 생성
+class RemoveLock2 implements RemoveStrategy{
+  check(tile: Tile): boolean {
+    return tile.isLOCK2();
+  }
+}
 
 function moveToTile(newx: number, newy: number) {
   map[playery][playerx] = new Air();
