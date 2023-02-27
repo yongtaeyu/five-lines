@@ -17,19 +17,24 @@ enum RawTile {
   KEY2, LOCK2
 }
 /*
-  step 11 enum 사용
+step 11 enum 사용
 enum FallingState{
   FALLING, RESTING
 }
+인터페이스 FallingState 생성 
+moveHorizontal(tile:Tile, dx: number): void 이동
+stone 적용.
 */
-// 인터페이스 FallingState 생성 
 interface FallingState{
   isFalling(): boolean,
-  isResting(): boolean
+  isResting(): boolean,
+  moveHorizontal(tile:Tile, dx: number): void;
 }
 
 // 클래스 생성.
 class Falling implements FallingState{
+  moveHorizontal(tile: Tile, dx: number): void {
+  }
   isFalling(): boolean {
     return true;
   }
@@ -38,6 +43,13 @@ class Falling implements FallingState{
   }
 }
 class Resting implements FallingState{
+  moveHorizontal(tile: Tile, dx: number): void {
+    if(map[playery][playerx + dx + dx].isAIR()
+    && !map[playery + 1][playerx + dx].isAIR()) {
+      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
+      moveToTile(playerx + dx, playery);
+    }
+  }
   isFalling(): boolean {
     return false;
   }
@@ -215,6 +227,12 @@ class Flux implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Stone implements Tile{
+  // falling 변수를 추가.
+  private falling:FallingState;
+  // 생성자 초기값 세팅
+  constructor(falling:FallingState){
+    this.falling = falling;
+  }
   isStoney(): boolean {
     return true;
   }
@@ -224,11 +242,7 @@ class Stone implements Tile{
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    if(map[playery][playerx + dx + dx].isAIR()
-    && !map[playery + 1][playerx + dx].isAIR()) {
-      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-      moveToTile(playerx + dx, playery);
-    }  
+    this.falling.moveHorizontal(this, dx);
   }
   isEdible(): boolean {
     return false;
@@ -244,39 +258,7 @@ class Stone implements Tile{
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return false;  }
-  isFALLING_BOX(): boolean { return false; }
-  isKEY1(): boolean { return false; }
-  isKEY2(): boolean { return false; }
-  isLOCK1(): boolean { return false; }
-  isLOCK2(): boolean { return false; }
-}
-class FallingStone implements Tile{
-  isStoney(): boolean {
-    return true;
-  }
-  isBoxy(): boolean {
-    return false;
-  }
-  moveVertical(dy: number): void {
-  }
-  moveHorizontal(dx: number): void {
-  }
-  isEdible(): boolean {
-    return false;
-  }
-  isPushaBle(): boolean {
-    return false;
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#0000cc";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isPLAYER(): boolean { return false;  }
-  isAIR(): boolean { return false;  }
-  isFLUX(): boolean { return false;  }
-  isUNBREAKABLE(): boolean { return false;  }
-  isFALLING_STONE(): boolean { return true;  }
+  isFALLING_STONE(): boolean { return this.falling.isFalling();  }
   isFALLING_BOX(): boolean { return false; }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
@@ -299,14 +281,9 @@ class Box implements Tile{
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    if(this.isFALLING_BOX() === false){
-      if(map[playery][playerx + dx + dx].isAIR()
-      && !map[playery + 1][playerx + dx].isAIR()) {
-        map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-        moveToTile(playerx + dx, playery);
-      }
-    }
+    this.falling.moveHorizontal(this, dx);
   }
+
   isEdible(): boolean {
     return false;
   }
@@ -466,7 +443,6 @@ class Lock2 implements Tile{
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return true; }
 }
-
 /*
   input -> RawInput 으로 변경.
 */
@@ -587,8 +563,8 @@ function transtormTile(tile: RawTile){
     case RawTile.BOX: return new Box(new Resting());
     case RawTile.UNBREAKABLE: return new Unbreakable();
     case RawTile.FALLING_BOX: return new Box(new Falling());
-    case RawTile.FALLING_STONE: return new FallingStone();
-    case RawTile.STONE: return new Stone();
+    case RawTile.FALLING_STONE: return new Stone(new Falling());
+    case RawTile.STONE: return new Stone(new Resting());
     case RawTile.LOCK1: return new Lock1();
     case RawTile.LOCK2: return new Lock2();
     case RawTile.KEY1: return new Key1();
@@ -675,14 +651,14 @@ function updateMap(){
 function updateTile(x:number, y:number){
   if ((map[y][x].isStoney())
     && map[y + 1][x].isAIR()) {
-    map[y + 1][x] = new FallingStone();
+    map[y + 1][x] = new Stone(new Falling());
     map[y][x] = new Air();
   } else if (map[y][x].isBoxy()
     && map[y + 1][x].isAIR()) {
     map[y + 1][x] = new Box(new Resting());
     map[y][x] = new Air();
   } else if (map[y][x].isFALLING_STONE()) {
-    map[y][x] = new Stone();
+    map[y][x] = new Stone(new Resting());
   } else if (map[y][x].isFALLING_BOX()) {
     map[y][x] = new Box(new Falling());
   }

@@ -19,6 +19,38 @@ var RawTile;
     RawTile[RawTile["KEY2"] = 10] = "KEY2";
     RawTile[RawTile["LOCK2"] = 11] = "LOCK2";
 })(RawTile || (RawTile = {}));
+// 클래스 생성.
+var Falling = /** @class */ (function () {
+    function Falling() {
+    }
+    Falling.prototype.moveHorizontal = function (tile, dx) {
+    };
+    Falling.prototype.isFalling = function () {
+        return true;
+    };
+    Falling.prototype.isResting = function () {
+        return false;
+    };
+    return Falling;
+}());
+var Resting = /** @class */ (function () {
+    function Resting() {
+    }
+    Resting.prototype.moveHorizontal = function (tile, dx) {
+        if (map[playery][playerx + dx + dx].isAIR()
+            && !map[playery + 1][playerx + dx].isAIR()) {
+            map[playery][playerx + dx + dx] = map[playery][playerx + dx];
+            moveToTile(playerx + dx, playery);
+        }
+    };
+    Resting.prototype.isFalling = function () {
+        return false;
+    };
+    Resting.prototype.isResting = function () {
+        return true;
+    };
+    return Resting;
+}());
 /*
   클래스들 생성.
   메서드 전문화
@@ -165,7 +197,9 @@ var Flux = /** @class */ (function () {
     return Flux;
 }());
 var Stone = /** @class */ (function () {
-    function Stone() {
+    // 생성자 초기값 세팅
+    function Stone(falling) {
+        this.falling = falling;
     }
     Stone.prototype.isStoney = function () {
         return true;
@@ -176,11 +210,7 @@ var Stone = /** @class */ (function () {
     Stone.prototype.moveVertical = function (dy) {
     };
     Stone.prototype.moveHorizontal = function (dx) {
-        if (map[playery][playerx + dx + dx].isAIR()
-            && !map[playery + 1][playerx + dx].isAIR()) {
-            map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-            moveToTile(playerx + dx, playery);
-        }
+        this.falling.moveHorizontal(this, dx);
     };
     Stone.prototype.isEdible = function () {
         return false;
@@ -196,7 +226,7 @@ var Stone = /** @class */ (function () {
     Stone.prototype.isAIR = function () { return false; };
     Stone.prototype.isFLUX = function () { return false; };
     Stone.prototype.isUNBREAKABLE = function () { return false; };
-    Stone.prototype.isFALLING_STONE = function () { return false; };
+    Stone.prototype.isFALLING_STONE = function () { return this.falling.isFalling(); };
     Stone.prototype.isFALLING_BOX = function () { return false; };
     Stone.prototype.isKEY1 = function () { return false; };
     Stone.prototype.isKEY2 = function () { return false; };
@@ -204,43 +234,10 @@ var Stone = /** @class */ (function () {
     Stone.prototype.isLOCK2 = function () { return false; };
     return Stone;
 }());
-var FallingStone = /** @class */ (function () {
-    function FallingStone() {
-    }
-    FallingStone.prototype.isStoney = function () {
-        return true;
-    };
-    FallingStone.prototype.isBoxy = function () {
-        return false;
-    };
-    FallingStone.prototype.moveVertical = function (dy) {
-    };
-    FallingStone.prototype.moveHorizontal = function (dx) {
-    };
-    FallingStone.prototype.isEdible = function () {
-        return false;
-    };
-    FallingStone.prototype.isPushaBle = function () {
-        return false;
-    };
-    FallingStone.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#0000cc";
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    };
-    FallingStone.prototype.isPLAYER = function () { return false; };
-    FallingStone.prototype.isAIR = function () { return false; };
-    FallingStone.prototype.isFLUX = function () { return false; };
-    FallingStone.prototype.isUNBREAKABLE = function () { return false; };
-    FallingStone.prototype.isFALLING_STONE = function () { return true; };
-    FallingStone.prototype.isFALLING_BOX = function () { return false; };
-    FallingStone.prototype.isKEY1 = function () { return false; };
-    FallingStone.prototype.isKEY2 = function () { return false; };
-    FallingStone.prototype.isLOCK1 = function () { return false; };
-    FallingStone.prototype.isLOCK2 = function () { return false; };
-    return FallingStone;
-}());
 var Box = /** @class */ (function () {
-    function Box() {
+    // 생성자 초기값 세팅
+    function Box(falling) {
+        this.falling = falling;
     }
     Box.prototype.isStoney = function () {
         return false;
@@ -251,11 +248,7 @@ var Box = /** @class */ (function () {
     Box.prototype.moveVertical = function (dy) {
     };
     Box.prototype.moveHorizontal = function (dx) {
-        if (map[playery][playerx + dx + dx].isAIR()
-            && !map[playery + 1][playerx + dx].isAIR()) {
-            map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-            moveToTile(playerx + dx, playery);
-        }
+        this.falling.moveHorizontal(this, dx);
     };
     Box.prototype.isEdible = function () {
         return false;
@@ -272,47 +265,12 @@ var Box = /** @class */ (function () {
     Box.prototype.isFLUX = function () { return false; };
     Box.prototype.isUNBREAKABLE = function () { return false; };
     Box.prototype.isFALLING_STONE = function () { return false; };
-    Box.prototype.isFALLING_BOX = function () { return false; };
+    Box.prototype.isFALLING_BOX = function () { return this.falling.isFalling(); };
     Box.prototype.isKEY1 = function () { return false; };
     Box.prototype.isKEY2 = function () { return false; };
     Box.prototype.isLOCK1 = function () { return false; };
     Box.prototype.isLOCK2 = function () { return false; };
     return Box;
-}());
-var FallingBox = /** @class */ (function () {
-    function FallingBox() {
-    }
-    FallingBox.prototype.isStoney = function () {
-        return false;
-    };
-    FallingBox.prototype.isBoxy = function () {
-        return true;
-    };
-    FallingBox.prototype.moveVertical = function (dy) {
-    };
-    FallingBox.prototype.moveHorizontal = function (dx) {
-    };
-    FallingBox.prototype.isEdible = function () {
-        return false;
-    };
-    FallingBox.prototype.isPushaBle = function () {
-        return false;
-    };
-    FallingBox.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#8b4513";
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    };
-    FallingBox.prototype.isPLAYER = function () { return false; };
-    FallingBox.prototype.isAIR = function () { return false; };
-    FallingBox.prototype.isFLUX = function () { return false; };
-    FallingBox.prototype.isUNBREAKABLE = function () { return false; };
-    FallingBox.prototype.isFALLING_STONE = function () { return false; };
-    FallingBox.prototype.isFALLING_BOX = function () { return true; };
-    FallingBox.prototype.isKEY1 = function () { return false; };
-    FallingBox.prototype.isKEY2 = function () { return false; };
-    FallingBox.prototype.isLOCK1 = function () { return false; };
-    FallingBox.prototype.isLOCK2 = function () { return false; };
-    return FallingBox;
 }());
 var Key1 = /** @class */ (function () {
     function Key1() {
@@ -580,11 +538,11 @@ function transtormTile(tile) {
     switch (tile) {
         case RawTile.AIR: return new Air();
         case RawTile.PLAYER: return new Player();
-        case RawTile.BOX: return new Box();
+        case RawTile.BOX: return new Box(new Resting());
         case RawTile.UNBREAKABLE: return new Unbreakable();
-        case RawTile.FALLING_BOX: return new FallingBox();
-        case RawTile.FALLING_STONE: return new FallingStone();
-        case RawTile.STONE: return new Stone();
+        case RawTile.FALLING_BOX: return new Box(new Falling());
+        case RawTile.FALLING_STONE: return new Stone(new Falling());
+        case RawTile.STONE: return new Stone(new Resting());
         case RawTile.LOCK1: return new Lock1();
         case RawTile.LOCK2: return new Lock2();
         case RawTile.KEY1: return new Key1();
@@ -665,19 +623,19 @@ function updateMap() {
 function updateTile(x, y) {
     if ((map[y][x].isStoney())
         && map[y + 1][x].isAIR()) {
-        map[y + 1][x] = new FallingStone();
+        map[y + 1][x] = new Stone(new Falling());
         map[y][x] = new Air();
     }
     else if (map[y][x].isBoxy()
         && map[y + 1][x].isAIR()) {
-        map[y + 1][x] = new FallingBox();
+        map[y + 1][x] = new Box(new Resting());
         map[y][x] = new Air();
     }
     else if (map[y][x].isFALLING_STONE()) {
-        map[y][x] = new Stone();
+        map[y][x] = new Stone(new Resting());
     }
     else if (map[y][x].isFALLING_BOX()) {
-        map[y][x] = new Box();
+        map[y][x] = new Box(new Falling());
     }
 }
 function draw() {
