@@ -343,8 +343,9 @@ class Key implements Tile{
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
+class Locks implements Tile{
+  constructor(private color:string, private lock1:boolean, private lock2:boolean){}
 
-class Lock1 implements Tile{
   updateTile(x: number, y: number): void {
   }
   isStoney(): boolean {
@@ -364,7 +365,8 @@ class Lock1 implements Tile{
     return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+//    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.color;
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isPLAYER(): boolean { return false;  }
@@ -373,43 +375,9 @@ class Lock1 implements Tile{
   isUNBREAKABLE(): boolean { return false;  }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
-  isLOCK1(): boolean { return true; }
-  isLOCK2(): boolean { return false; }
+  isLOCK1(): boolean { return this.lock1; }
+  isLOCK2(): boolean { return this.lock2; }
 }
-class Lock2 implements Tile{
-  updateTile(x: number, y: number): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
-  }
-  moveVertical(dy: number): void {
-  }
-  moveHorizontal(dx: number): void {
-  }
-  isEdible(): boolean {
-    return false;
-  }
-  isPushaBle(): boolean {
-    return false;
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isPLAYER(): boolean { return false;  }
-  isAIR(): boolean { return false;  }
-  isFLUX(): boolean { return false;  }
-  isUNBREAKABLE(): boolean { return false;  }
-  isKEY1(): boolean { return false; }
-  isKEY2(): boolean { return false; }
-  isLOCK1(): boolean { return false; }
-  isLOCK2(): boolean { return true; }
-}
-
-
 /*
   input -> RawInput 으로 변경.
 */
@@ -532,8 +500,8 @@ function transtormTile(tile: RawTile){
     case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FALLING_STONE: return new Stone(new Falling());
     case RawTile.STONE: return new Stone(new Resting());
-    case RawTile.LOCK1: return new Lock1();
-    case RawTile.LOCK2: return new Lock2();
+    case RawTile.LOCK1: return new Locks("#ffcc00", true, false);
+    case RawTile.LOCK2: return new Locks("#00ccff", false, true);
     case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
     case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
     case RawTile.FLUX: return new Flux();

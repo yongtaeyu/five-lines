@@ -284,153 +284,84 @@ var Box = /** @class */ (function () {
     Box.prototype.isLOCK2 = function () { return false; };
     return Box;
 }());
-var Key1 = /** @class */ (function () {
-    function Key1() {
+var Key = /** @class */ (function () {
+    function Key(removeStrategy, color) {
+        this.removeStrategy = removeStrategy;
+        this.color = color;
     }
-    Key1.prototype.updateTile = function (x, y) {
+    Key.prototype.updateTile = function (x, y) {
     };
-    Key1.prototype.isStoney = function () {
+    Key.prototype.isStoney = function () {
         return false;
     };
-    Key1.prototype.isBoxy = function () {
+    Key.prototype.isBoxy = function () {
         return false;
     };
-    Key1.prototype.moveVertical = function (dy) {
-        removeLock1();
+    Key.prototype.moveVertical = function (dy) {
+        removeLock(this.removeStrategy);
         moveToTile(playerx, playery + dy);
     };
-    Key1.prototype.moveHorizontal = function (dx) {
-        removeLock1();
+    Key.prototype.moveHorizontal = function (dx) {
+        removeLock(this.removeStrategy);
         moveToTile(playerx + dx, playery);
     };
-    Key1.prototype.isEdible = function () {
+    Key.prototype.isEdible = function () {
         return false;
     };
-    Key1.prototype.isPushaBle = function () {
+    Key.prototype.isPushaBle = function () {
         return false;
     };
-    Key1.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#ffcc00";
+    Key.prototype.draw = function (g, x, y) {
+        g.fillStyle = this.color;
+        //"#ffcc00";
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
-    Key1.prototype.isPLAYER = function () { return false; };
-    Key1.prototype.isAIR = function () { return false; };
-    Key1.prototype.isFLUX = function () { return false; };
-    Key1.prototype.isUNBREAKABLE = function () { return false; };
-    Key1.prototype.isKEY1 = function () { return true; };
-    Key1.prototype.isKEY2 = function () { return false; };
-    Key1.prototype.isLOCK1 = function () { return false; };
-    Key1.prototype.isLOCK2 = function () { return false; };
-    return Key1;
+    Key.prototype.isPLAYER = function () { return false; };
+    Key.prototype.isAIR = function () { return false; };
+    Key.prototype.isFLUX = function () { return false; };
+    Key.prototype.isUNBREAKABLE = function () { return false; };
+    Key.prototype.isLOCK1 = function () { return false; };
+    Key.prototype.isLOCK2 = function () { return false; };
+    return Key;
 }());
-var Key2 = /** @class */ (function () {
-    function Key2() {
+var Locks = /** @class */ (function () {
+    function Locks(color, lock1, lock2) {
+        this.color = color;
+        this.lock1 = lock1;
+        this.lock2 = lock2;
     }
-    Key2.prototype.updateTile = function (x, y) {
+    Locks.prototype.updateTile = function (x, y) {
     };
-    Key2.prototype.isStoney = function () {
+    Locks.prototype.isStoney = function () {
         return false;
     };
-    Key2.prototype.isBoxy = function () {
+    Locks.prototype.isBoxy = function () {
         return false;
     };
-    Key2.prototype.moveVertical = function (dy) {
-        removeLock2();
-        moveToTile(playerx, playery + dy);
+    Locks.prototype.moveVertical = function (dy) {
     };
-    Key2.prototype.moveHorizontal = function (dx) {
-        removeLock2();
-        moveToTile(playerx + dx, playery);
+    Locks.prototype.moveHorizontal = function (dx) {
     };
-    Key2.prototype.isEdible = function () {
+    Locks.prototype.isEdible = function () {
         return false;
     };
-    Key2.prototype.isPushaBle = function () {
+    Locks.prototype.isPushaBle = function () {
         return false;
     };
-    Key2.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#00ccff";
+    Locks.prototype.draw = function (g, x, y) {
+        //    g.fillStyle = "#ffcc00";
+        g.fillStyle = this.color;
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
-    Key2.prototype.isPLAYER = function () { return false; };
-    Key2.prototype.isAIR = function () { return false; };
-    Key2.prototype.isFLUX = function () { return false; };
-    Key2.prototype.isUNBREAKABLE = function () { return false; };
-    Key2.prototype.isKEY1 = function () { return false; };
-    Key2.prototype.isKEY2 = function () { return true; };
-    Key2.prototype.isLOCK1 = function () { return false; };
-    Key2.prototype.isLOCK2 = function () { return false; };
-    return Key2;
-}());
-var Lock1 = /** @class */ (function () {
-    function Lock1() {
-    }
-    Lock1.prototype.updateTile = function (x, y) {
-    };
-    Lock1.prototype.isStoney = function () {
-        return false;
-    };
-    Lock1.prototype.isBoxy = function () {
-        return false;
-    };
-    Lock1.prototype.moveVertical = function (dy) {
-    };
-    Lock1.prototype.moveHorizontal = function (dx) {
-    };
-    Lock1.prototype.isEdible = function () {
-        return false;
-    };
-    Lock1.prototype.isPushaBle = function () {
-        return false;
-    };
-    Lock1.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#ffcc00";
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    };
-    Lock1.prototype.isPLAYER = function () { return false; };
-    Lock1.prototype.isAIR = function () { return false; };
-    Lock1.prototype.isFLUX = function () { return false; };
-    Lock1.prototype.isUNBREAKABLE = function () { return false; };
-    Lock1.prototype.isKEY1 = function () { return false; };
-    Lock1.prototype.isKEY2 = function () { return false; };
-    Lock1.prototype.isLOCK1 = function () { return true; };
-    Lock1.prototype.isLOCK2 = function () { return false; };
-    return Lock1;
-}());
-var Lock2 = /** @class */ (function () {
-    function Lock2() {
-    }
-    Lock2.prototype.updateTile = function (x, y) {
-    };
-    Lock2.prototype.isStoney = function () {
-        return false;
-    };
-    Lock2.prototype.isBoxy = function () {
-        return false;
-    };
-    Lock2.prototype.moveVertical = function (dy) {
-    };
-    Lock2.prototype.moveHorizontal = function (dx) {
-    };
-    Lock2.prototype.isEdible = function () {
-        return false;
-    };
-    Lock2.prototype.isPushaBle = function () {
-        return false;
-    };
-    Lock2.prototype.draw = function (g, x, y) {
-        g.fillStyle = "#00ccff";
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    };
-    Lock2.prototype.isPLAYER = function () { return false; };
-    Lock2.prototype.isAIR = function () { return false; };
-    Lock2.prototype.isFLUX = function () { return false; };
-    Lock2.prototype.isUNBREAKABLE = function () { return false; };
-    Lock2.prototype.isKEY1 = function () { return false; };
-    Lock2.prototype.isKEY2 = function () { return false; };
-    Lock2.prototype.isLOCK1 = function () { return false; };
-    Lock2.prototype.isLOCK2 = function () { return true; };
-    return Lock2;
+    Locks.prototype.isPLAYER = function () { return false; };
+    Locks.prototype.isAIR = function () { return false; };
+    Locks.prototype.isFLUX = function () { return false; };
+    Locks.prototype.isUNBREAKABLE = function () { return false; };
+    Locks.prototype.isKEY1 = function () { return false; };
+    Locks.prototype.isKEY2 = function () { return false; };
+    Locks.prototype.isLOCK1 = function () { return this.lock1; };
+    Locks.prototype.isLOCK2 = function () { return this.lock2; };
+    return Locks;
 }());
 /*
   input -> RawInput 으로 변경.
@@ -553,10 +484,10 @@ function transtormTile(tile) {
         case RawTile.FALLING_BOX: return new Box(new Falling());
         case RawTile.FALLING_STONE: return new Stone(new Falling());
         case RawTile.STONE: return new Stone(new Resting());
-        case RawTile.LOCK1: return new Lock1();
-        case RawTile.LOCK2: return new Lock2();
-        case RawTile.KEY1: return new Key1();
-        case RawTile.KEY2: return new Key2();
+        case RawTile.LOCK1: return new Locks("#ffcc00", true, false);
+        case RawTile.LOCK2: return new Locks("#00ccff", false, true);
+        case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
+        case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
         case RawTile.FLUX: return new Flux();
         default: assertExhausted(tile);
     }
@@ -570,24 +501,33 @@ function transtormMap() {
         }
     }
 }
-function removeLock1() {
+function removeLock(removeStrategy) {
     for (var y = 0; y < map.length; y++) {
         for (var x = 0; x < map[y].length; x++) {
-            if (map[y][x].isLOCK1()) {
+            if (removeStrategy.check(map[y][x])) {
                 map[y][x] = new Air();
             }
         }
     }
 }
-function removeLock2() {
-    for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[y].length; x++) {
-            if (map[y][x].isLOCK2()) {
-                map[y][x] = new Air();
-            }
-        }
+// 클래스 생성
+var RemoveLock1 = /** @class */ (function () {
+    function RemoveLock1() {
     }
-}
+    RemoveLock1.prototype.check = function (tile) {
+        return tile.isLOCK1();
+    };
+    return RemoveLock1;
+}());
+// 클래스 생성
+var RemoveLock2 = /** @class */ (function () {
+    function RemoveLock2() {
+    }
+    RemoveLock2.prototype.check = function (tile) {
+        return tile.isLOCK2();
+    };
+    return RemoveLock2;
+}());
 function moveToTile(newx, newy) {
     map[playery][playerx] = new Air();
     map[newy][newx] = new Player();
