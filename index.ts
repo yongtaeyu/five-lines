@@ -68,8 +68,6 @@ interface Tile{
   isAIR():boolean,
   isFLUX(): boolean,  
   isUNBREAKABLE(): boolean,  
-  isKEY1(): boolean,  
-  isKEY2(): boolean,  
   isLOCK1(): boolean,  
   isLOCK2(): boolean,
   draw(g:CanvasRenderingContext2D, x:number, y:number):void  ,
@@ -79,7 +77,6 @@ interface Tile{
   moveVertical(dy:number):void,
   updateTile(x:number, y:number):void
 }
-
 
 // 새로운 클래스 생성.
 class FallStrategy {
@@ -103,7 +100,6 @@ class FallStrategy {
     }
   }
 }
-
 
 /*
   클래스들 생성.
@@ -309,7 +305,10 @@ class Box implements Tile{
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
-class Key1 implements Tile{
+class Key implements Tile{
+  
+  constructor(private removeStrategy:RemoveStrategy, private color:string){
+  }
   updateTile(x: number, y: number): void {
   }
   isStoney(): boolean {
@@ -319,11 +318,11 @@ class Key1 implements Tile{
     return false;
   }
   moveVertical(dy: number): void {
-    removeLock(new RemoveLock1());
+    removeLock(this.removeStrategy);
     moveToTile(playerx, playery + dy);
   }
   moveHorizontal(dx: number): void {
-    removeLock(new RemoveLock1());
+    removeLock(this.removeStrategy);
     moveToTile(playerx + dx, playery);
   }
   isEdible(): boolean {
@@ -333,54 +332,18 @@ class Key1 implements Tile{
     return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.color;
+    //"#ffcc00";
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isPLAYER(): boolean { return false;  }
   isAIR(): boolean { return false;  }
   isFLUX(): boolean { return false;  }
   isUNBREAKABLE(): boolean { return false;  }
-  isKEY1(): boolean { return true; }
-  isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return false; }
   isLOCK2(): boolean { return false; }
 }
-class Key2 implements Tile{
-  updateTile(x: number, y: number): void {
-  }
-  isStoney(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
-  }
-  moveVertical(dy: number): void {
-    removeLock(new RemoveLock2());
-    moveToTile(playerx, playery + dy);
-  }
-  moveHorizontal(dx: number): void {
-    removeLock(new RemoveLock2());
-    moveToTile(playerx + dx, playery);
-  }
-  isEdible(): boolean {
-    return false;
-  }
-  isPushaBle(): boolean {
-    return false;
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isPLAYER(): boolean { return false;  }
-  isAIR(): boolean { return false;  }
-  isFLUX(): boolean { return false;  }
-  isUNBREAKABLE(): boolean { return false;  }
-  isKEY1(): boolean { return false; }
-  isKEY2(): boolean { return true; }
-  isLOCK1(): boolean { return false; }
-  isLOCK2(): boolean { return false; }
-}
+
 class Lock1 implements Tile{
   updateTile(x: number, y: number): void {
   }
@@ -571,8 +534,8 @@ function transtormTile(tile: RawTile){
     case RawTile.STONE: return new Stone(new Resting());
     case RawTile.LOCK1: return new Lock1();
     case RawTile.LOCK2: return new Lock2();
-    case RawTile.KEY1: return new Key1();
-    case RawTile.KEY2: return new Key2();
+    case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
+    case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
     case RawTile.FLUX: return new Flux();
     default: assertExhausted(tile);
   }
