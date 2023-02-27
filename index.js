@@ -325,10 +325,9 @@ var Key = /** @class */ (function () {
     return Key;
 }());
 var Locks = /** @class */ (function () {
-    function Locks(color, lock1, lock2) {
+    function Locks(color, lock1) {
         this.color = color;
         this.lock1 = lock1;
-        this.lock2 = lock2;
     }
     Locks.prototype.updateTile = function (x, y) {
     };
@@ -360,7 +359,7 @@ var Locks = /** @class */ (function () {
     Locks.prototype.isKEY1 = function () { return false; };
     Locks.prototype.isKEY2 = function () { return false; };
     Locks.prototype.isLOCK1 = function () { return this.lock1; };
-    Locks.prototype.isLOCK2 = function () { return this.lock2; };
+    Locks.prototype.isLOCK2 = function () { return !this.lock1; };
     return Locks;
 }());
 /*
@@ -484,8 +483,8 @@ function transtormTile(tile) {
         case RawTile.FALLING_BOX: return new Box(new Falling());
         case RawTile.FALLING_STONE: return new Stone(new Falling());
         case RawTile.STONE: return new Stone(new Resting());
-        case RawTile.LOCK1: return new Locks("#ffcc00", true, false);
-        case RawTile.LOCK2: return new Locks("#00ccff", false, true);
+        case RawTile.LOCK1: return new Locks("#ffcc00", true);
+        case RawTile.LOCK2: return new Locks("#00ccff", false);
         case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
         case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
         case RawTile.FLUX: return new Flux();

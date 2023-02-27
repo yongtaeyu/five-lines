@@ -344,7 +344,7 @@ class Key implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Locks implements Tile{
-  constructor(private color:string, private lock1:boolean, private lock2:boolean){}
+  constructor(private color:string, private lock1:boolean){}
 
   updateTile(x: number, y: number): void {
   }
@@ -376,8 +376,9 @@ class Locks implements Tile{
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
   isLOCK1(): boolean { return this.lock1; }
-  isLOCK2(): boolean { return this.lock2; }
+  isLOCK2(): boolean { return !this.lock1; }
 }
+
 /*
   input -> RawInput 으로 변경.
 */
@@ -500,8 +501,8 @@ function transtormTile(tile: RawTile){
     case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FALLING_STONE: return new Stone(new Falling());
     case RawTile.STONE: return new Stone(new Resting());
-    case RawTile.LOCK1: return new Locks("#ffcc00", true, false);
-    case RawTile.LOCK2: return new Locks("#00ccff", false, true);
+    case RawTile.LOCK1: return new Locks("#ffcc00", true);
+    case RawTile.LOCK2: return new Locks("#00ccff", false);
     case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
     case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
     case RawTile.FLUX: return new Flux();
