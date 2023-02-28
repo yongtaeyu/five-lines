@@ -18,7 +18,7 @@ enum RawTile {
 interface FallingState{
   isFalling(): boolean,
   isResting(): boolean,
-  moveHorizontal(tile:Tile, dx: number): void,
+  moveHorizontal(player:Player, tile:Tile, dx: number): void,
   drop(tile:Tile, x:number, y:number):void
 }
 /*
@@ -27,25 +27,34 @@ interface FallingState{
 class Player{
   private x:number = 1;
   private y:number = 1;
-  
-  public getX(){
-    return this.x;
-  }
-  getY(){
-    return this.y;
-  }
-  setX(x:number){
-    this.x=x;
-  }
-  setY(y:number){
-    this.y=y;
-  }
   draw(g:CanvasRenderingContext2D){
     // Draw player
     g.fillStyle = "#ff0000";
     g.fillRect(
         this.x * TILE_SIZE, 
         this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  }
+  pushHorizontal(tile: Tile, dx: number){
+    if(map[this.y][this.x + dx + dx].isAIR()
+    && !map[this.y + 1][this.x + dx].isAIR()) {
+      map[this.y][this.x + dx + dx] = map[this.y][this.x + dx];
+      this.moveToTile(this.x + dx, this.y);
+    }
+  }
+  moveHorizontal(dx:number){
+    map[this.y][this.x+dx].moveHorizontal(this, dx);
+  }
+  moveVertical(dy:number){
+    this.moveToTile(this.x, this.y + dy);
+  }
+  move(dx: number, dy: number){
+    this.moveToTile(this.x+dx, this.y+dy);
+  }
+  moveToTile(newx: number, newy: number) {
+    map[this.y][this.x] = new Air();
+    map[newy][newx]            = new PlayerTile();
+    this.x = newx;
+    this.y = newy;
   }
 }
 let player = new Player();
@@ -56,7 +65,7 @@ class Falling implements FallingState{
       map[y + 1][x] = tile;
       map[y][x] = new Air();
   }
-  moveHorizontal(tile: Tile, dx: number): void {
+  moveHorizontal(player:Player, tile: Tile, dx: number): void {
   }
   isFalling(): boolean {
     return true;
@@ -68,12 +77,8 @@ class Falling implements FallingState{
 class Resting implements FallingState{
   drop(tile: Tile, x: number, y: number): void {
   }
-  moveHorizontal(tile: Tile, dx: number): void {
-    if(map[player.getY()][player.getX() + dx + dx].isAIR()
-    && !map[player.getY() + 1][player.getX() + dx].isAIR()) {
-      map[player.getY()][player.getX() + dx + dx] = map[player.getY()][player.getX() + dx];
-      moveToTile(player.getX() + dx, player.getY());
-    }
+  moveHorizontal(player:Player, tile: Tile, dx: number): void {
+    player.pushHorizontal(tile, dx);
   }
   isFalling(): boolean {
     return false;
@@ -83,20 +88,6 @@ class Resting implements FallingState{
   }
 }
 
-/*
-  step 7 인터페이스로 변경.
-         Tile2 -> Tile2 이름 변경.
-  step 9 draw 함수 추가 하여 
-  코드 중복 처리        
-  step 11 복잡한 if 체인 구문 리팩터링
-  isEdible() 추가
-  isPushaBle() 추가
-  추가 코드이관
-  step 12 유사한 코드 웅합하기
-  유사한 클래스 통합하기
-
-
-*/
 interface Tile{
   isPLAYER():boolean,
   isAIR():boolean,
@@ -115,19 +106,16 @@ interface Tile{
 
 // 새로운 클래스 생성.
 class FallStrategy {
-
   private falling:FallingState;
   constructor(falling:FallingState){
     this.falling = falling;
   }
-
   update(tile:Tile, x:number, y:number){
     this.falling = map[y + 1][x].getBlockOnTopState();
     this.falling.drop(tile,x,y); 
   }
-
-  moveHorizontal(tile:Tile, dx:number){
-    this.falling.moveHorizontal(tile, dx);
+  moveHorizontal(player:Player, tile:Tile, dx:number){
+    this.falling.moveHorizontal(player, tile, dx);
   }
 }
 
@@ -176,10 +164,8 @@ class Air implements Tile{
     return false;
   }
   moveVertical(player:Player, dy: number): void {
-    moveToTile(player.getX(), player.getY() + dy);
   }
   moveHorizontal(player:Player, dx: number): void {
-    moveToTile(player.getX() + dx, player.getY());
   }
   isEdible(): boolean {
     return true;
@@ -244,10 +230,8 @@ class Flux implements Tile{
   rest(): void {
   }
   moveVertical(player:Player, dy: number): void {
-    moveToTile(player.getX(), player.getY() + dy);
   }
   moveHorizontal(player:Player, dx: number): void {
-    moveToTile(player.getX() + dx, player.getY());
   }
   isEdible(): boolean {
     return true;
@@ -284,7 +268,7 @@ class Stone implements Tile{
   moveVertical(player:Player, dy: number): void {
   }
   moveHorizontal(player:Player, dx: number): void {
-    this.fallStrategy.moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(player, this, dx);
   }
   isEdible(): boolean {
     return false;
@@ -327,7 +311,7 @@ class Box implements Tile{
   moveVertical(player:Player, dy: number): void {
   }
   moveHorizontal(player:Player, dx: number): void {
-    this.fallStrategy.moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(player, this, dx);
   }
 
   isEdible(): boolean {
@@ -366,11 +350,11 @@ class Key implements Tile{
   }
   moveVertical(player:Player, dy: number): void {
     this.keyConfigration.getremoveLock();
-    moveToTile(player.getX(), player.getY() + dy);
+    player.moveVertical(dy);
   }
   moveHorizontal(player:Player, dx: number): void {
     this.keyConfigration.getremoveLock();
-    moveToTile(player.getX() + dx, player.getY());
+    player.moveHorizontal(dx);
   }
   isEdible(): boolean {
     return false;
@@ -413,7 +397,6 @@ class Locks implements Tile{
     return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-//    g.fillStyle = "#ffcc00";
     this.keyConfigration.setColor(g);
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
@@ -434,13 +417,14 @@ interface Input{
   isLeft():boolean,
   isUp():boolean,
   isDown():boolean,
-  handle():void
+  handle(player:Player):void
 }
 // step5 새로운 클래스 생성.
 // step6 handle() 메소드 구현.
 class right implements Input{
-  handle(): void {
-    map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
+  handle(player:Player): void {
+    player.moveHorizontal(1);
+//    map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
   }
   isRight(): boolean {
     return true;
@@ -456,8 +440,9 @@ class right implements Input{
   }
 }
 class left implements Input{
-  handle(): void {
-    map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
+  handle(player:Player): void {
+    player.moveHorizontal(-1);
+//    map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
   }
   isRight(): boolean {
     return false;
@@ -473,8 +458,9 @@ class left implements Input{
   }
 }
 class up implements Input{
-  handle(): void {
-    map[player.getY()-1][player.getX()].moveVertical(player, -1);
+  handle(player:Player): void {
+    player.moveVertical(-1);
+//    map[player.getY()-1][player.getX()].moveVertical(player, -1);
   }
   isRight(): boolean {
     return false;
@@ -490,8 +476,9 @@ class up implements Input{
   }
 }
 class down implements Input{
-  handle(): void {
-    map[player.getY()+1][player.getX()].moveVertical(player, 1);
+  handle(player:Player): void {
+    player.moveVertical(1);
+    //map[player.getY()+1][player.getX()].moveVertical(player, 1);
   }
   isRight(): boolean {
     return false;
@@ -599,11 +586,8 @@ function removeLock(removeStrategy:RemoveStrategy) {
   }
 }
 
-function moveToTile(newx: number, newy: number) {
-  map[player.getY()][player.getX()] = new Air();
-  map[newy][newx] = new PlayerTile();
-  player.setX(newx);
-  player.setY(newy);
+function moveToTile(player:Player, newx: number, newy: number) {
+  player.moveToTile(newx, newy);
 }
 
 /*
@@ -623,7 +607,7 @@ function update() {
 function handleInputs(){
   while (inputs.length > 0) {
     let current = inputs.pop();
-    current.handle();
+    current.handle(player);
 //  handleInput(current);
   }
 }
@@ -649,7 +633,7 @@ function draw() {
     메소드 쪼개기
   */
   drawMap(g);
-  drawPlayer(g);
+  player.draw(g);
 }
 
 /*
@@ -677,15 +661,6 @@ function drawMap(g:CanvasRenderingContext2D){
   }
 }
 
-/*
-  step 1
-  메소드 쪼개기
-*/  
-function drawPlayer(g:CanvasRenderingContext2D){
-  // Draw player
-  g.fillStyle = "#ff0000";
-  g.fillRect(player.getX() * TILE_SIZE, player.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-}
 
 
 function gameLoop() {
