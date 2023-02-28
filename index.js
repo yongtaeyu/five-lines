@@ -23,6 +23,10 @@ var RawTile;
 var Falling = /** @class */ (function () {
     function Falling() {
     }
+    Falling.prototype.drop = function (tile, x, y) {
+        map[y + 1][x] = tile;
+        map[y][x] = new Air();
+    };
     Falling.prototype.moveHorizontal = function (tile, dx) {
     };
     Falling.prototype.isFalling = function () {
@@ -36,6 +40,8 @@ var Falling = /** @class */ (function () {
 var Resting = /** @class */ (function () {
     function Resting() {
     }
+    Resting.prototype.drop = function (tile, x, y) {
+    };
     Resting.prototype.moveHorizontal = function (tile, dx) {
         if (map[playery][playerx + dx + dx].isAIR()
             && !map[playery + 1][playerx + dx].isAIR()) {
@@ -57,17 +63,11 @@ var FallStrategy = /** @class */ (function () {
         this.falling = falling;
     }
     FallStrategy.prototype.update = function (tile, x, y) {
-        this.falling = map[y + 1][x].isAIR() ? new Falling() : new Resting();
-        this.drop(tile, x, y);
+        this.falling = map[y + 1][x].getBlockOnTopState();
+        this.falling.drop(tile, x, y);
     };
-    FallStrategy.prototype.getFalling = function () {
-        return this.falling;
-    };
-    FallStrategy.prototype.drop = function (tile, x, y) {
-        if (this.falling.isFalling()) {
-            map[y + 1][x] = tile;
-            map[y][x] = new Air();
-        }
+    FallStrategy.prototype.moveHorizontal = function (tile, dx) {
+        this.falling.moveHorizontal(tile, dx);
     };
     return FallStrategy;
 }());
@@ -79,6 +79,9 @@ var FallStrategy = /** @class */ (function () {
 var Player = /** @class */ (function () {
     function Player() {
     }
+    Player.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Player.prototype.updateTile = function (x, y) {
     };
     Player.prototype.isFalling = function () {
@@ -109,6 +112,9 @@ var Player = /** @class */ (function () {
 var Air = /** @class */ (function () {
     function Air() {
     }
+    Air.prototype.getBlockOnTopState = function () {
+        return new Falling();
+    };
     Air.prototype.updateTile = function (x, y) {
     };
     Air.prototype.isFalling = function () {
@@ -141,6 +147,9 @@ var Air = /** @class */ (function () {
 var Unbreakable = /** @class */ (function () {
     function Unbreakable() {
     }
+    Unbreakable.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Unbreakable.prototype.updateTile = function (x, y) {
     };
     Unbreakable.prototype.isFalling = function () {
@@ -173,6 +182,9 @@ var Unbreakable = /** @class */ (function () {
 var Flux = /** @class */ (function () {
     function Flux() {
     }
+    Flux.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Flux.prototype.updateTile = function (x, y) {
     };
     Flux.prototype.isFalling = function () {
@@ -213,15 +225,16 @@ var Stone = /** @class */ (function () {
     function Stone(falling) {
         this.fallStrategy = new FallStrategy(falling);
     }
+    Stone.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Stone.prototype.updateTile = function (x, y) {
         this.fallStrategy.update(this, x, y);
     };
     Stone.prototype.moveVertical = function (dy) {
     };
     Stone.prototype.moveHorizontal = function (dx) {
-        this.fallStrategy
-            .getFalling()
-            .moveHorizontal(this, dx);
+        this.fallStrategy.moveHorizontal(this, dx);
     };
     Stone.prototype.isEdible = function () {
         return false;
@@ -248,6 +261,9 @@ var Box = /** @class */ (function () {
     function Box(falling) {
         this.fallStrategy = new FallStrategy(falling);
     }
+    Box.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Box.prototype.updateTile = function (x, y) {
         this.fallStrategy.update(this, x, y);
     };
@@ -260,9 +276,7 @@ var Box = /** @class */ (function () {
     Box.prototype.moveVertical = function (dy) {
     };
     Box.prototype.moveHorizontal = function (dx) {
-        this.fallStrategy
-            .getFalling()
-            .moveHorizontal(this, dx);
+        this.fallStrategy.moveHorizontal(this, dx);
     };
     Box.prototype.isEdible = function () {
         return false;
@@ -288,6 +302,9 @@ var Key = /** @class */ (function () {
     function Key(keyConfigration) {
         this.keyConfigration = keyConfigration;
     }
+    Key.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Key.prototype.updateTile = function (x, y) {
     };
     Key.prototype.isStoney = function () {
@@ -297,11 +314,11 @@ var Key = /** @class */ (function () {
         return false;
     };
     Key.prototype.moveVertical = function (dy) {
-        removeLock(this.keyConfigration.getRemoveStrategy());
+        this.keyConfigration.getremoveLock();
         moveToTile(playerx, playery + dy);
     };
     Key.prototype.moveHorizontal = function (dx) {
-        removeLock(this.keyConfigration.getRemoveStrategy());
+        this.keyConfigration.getremoveLock();
         moveToTile(playerx + dx, playery);
     };
     Key.prototype.isEdible = function () {
@@ -311,8 +328,7 @@ var Key = /** @class */ (function () {
         return false;
     };
     Key.prototype.draw = function (g, x, y) {
-        g.fillStyle = this.keyConfigration.getColor();
-        //"#ffcc00";
+        this.keyConfigration.setColor(g);
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
     Key.prototype.isPLAYER = function () { return false; };
@@ -327,6 +343,9 @@ var Locks = /** @class */ (function () {
     function Locks(keyConfigration) {
         this.keyConfigration = keyConfigration;
     }
+    Locks.prototype.getBlockOnTopState = function () {
+        return new Resting();
+    };
     Locks.prototype.updateTile = function (x, y) {
     };
     Locks.prototype.isStoney = function () {
@@ -347,7 +366,7 @@ var Locks = /** @class */ (function () {
     };
     Locks.prototype.draw = function (g, x, y) {
         //    g.fillStyle = "#ffcc00";
-        g.fillStyle = this.keyConfigration.getColor();
+        this.keyConfigration.setColor(g);
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
     Locks.prototype.isPLAYER = function () { return false; };
@@ -477,14 +496,14 @@ var keyConfigration = /** @class */ (function () {
         this.is_1 = is_1;
         this.removeStrategy = removeStrategy;
     }
-    keyConfigration.prototype.getColor = function () {
-        return this.color;
+    keyConfigration.prototype.setColor = function (g) {
+        g.fillStyle = this.color;
     };
     keyConfigration.prototype.is1 = function () {
         return this.is_1;
     };
-    keyConfigration.prototype.getRemoveStrategy = function () {
-        return this.removeStrategy;
+    keyConfigration.prototype.getremoveLock = function () {
+        removeLock(this.removeStrategy);
     };
     return keyConfigration;
 }());

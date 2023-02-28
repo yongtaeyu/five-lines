@@ -19,11 +19,16 @@ enum RawTile {
 interface FallingState{
   isFalling(): boolean,
   isResting(): boolean,
-  moveHorizontal(tile:Tile, dx: number): void;
+  moveHorizontal(tile:Tile, dx: number): void,
+  drop(tile:Tile, x:number, y:number):void
 }
 
 // 클래스 생성.
 class Falling implements FallingState{
+  drop(tile: Tile, x: number, y: number): void {
+      map[y + 1][x] = tile;
+      map[y][x] = new Air();
+  }
   moveHorizontal(tile: Tile, dx: number): void {
   }
   isFalling(): boolean {
@@ -34,6 +39,8 @@ class Falling implements FallingState{
   }
 }
 class Resting implements FallingState{
+  drop(tile: Tile, x: number, y: number): void {
+  }
   moveHorizontal(tile: Tile, dx: number): void {
     if(map[playery][playerx + dx + dx].isAIR()
     && !map[playery + 1][playerx + dx].isAIR()) {
@@ -75,7 +82,8 @@ interface Tile{
   isPushaBle(): boolean,
   moveHorizontal(dx:number):void,
   moveVertical(dy:number):void,
-  updateTile(x:number, y:number):void
+  updateTile(x:number, y:number):void,
+  getBlockOnTopState(): FallingState;
 }
 
 // 새로운 클래스 생성.
@@ -87,17 +95,12 @@ class FallStrategy {
   }
 
   update(tile:Tile, x:number, y:number){
-    this.falling = map[y + 1][x].isAIR()?new Falling():new Resting();
-    this.drop(tile,x,y); 
+    this.falling = map[y + 1][x].getBlockOnTopState();
+    this.falling.drop(tile,x,y); 
   }
-  getFalling(){
-    return this.falling;
-  }
-  drop(tile:Tile, x:number,y:number ){
-    if(this.falling.isFalling()){
-      map[y + 1][x] = tile;
-      map[y][x] = new Air();
-    }
+
+  moveHorizontal(tile:Tile, dx:number){
+    this.falling.moveHorizontal(tile, dx);
   }
 }
 
@@ -107,6 +110,9 @@ class FallStrategy {
   step 11 복잡한 if 체인 구문 리팩터링
 */
 class Player implements Tile{
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
   }
   isFalling(): boolean {
@@ -134,6 +140,9 @@ class Player implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Air implements Tile{
+  getBlockOnTopState(): FallingState {
+    return new Falling();
+  }
   updateTile(x: number, y: number): void {
   }
   isFalling(): boolean {
@@ -163,6 +172,9 @@ class Air implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Unbreakable implements Tile{
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
   }
   isFalling(): boolean {
@@ -192,6 +204,9 @@ class Unbreakable implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Flux implements Tile{
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
   }
   isFalling(): boolean {
@@ -233,15 +248,16 @@ class Stone implements Tile{
   constructor(falling:FallingState){
     this.fallStrategy = new FallStrategy(falling);
   }
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
     this.fallStrategy.update(this, x,y);
   }
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    this.fallStrategy
-      .getFalling()
-      .moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(this, dx);
   }
   isEdible(): boolean {
     return false;
@@ -269,6 +285,9 @@ class Box implements Tile{
   constructor(falling:FallingState){
     this.fallStrategy = new FallStrategy(falling);
   }
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
     this.fallStrategy.update(this, x,y);
   }
@@ -281,9 +300,7 @@ class Box implements Tile{
   moveVertical(dy: number): void {
   }
   moveHorizontal(dx: number): void {
-    this.fallStrategy
-      .getFalling()
-      .moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(this, dx);
   }
 
   isEdible(): boolean {
@@ -309,6 +326,9 @@ class Key implements Tile{
   
   constructor(private keyConfigration:keyConfigration){
   }
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
   }
   isStoney(): boolean {
@@ -318,11 +338,11 @@ class Key implements Tile{
     return false;
   }
   moveVertical(dy: number): void {
-    removeLock(this.keyConfigration.getRemoveStrategy());
+    this.keyConfigration.getremoveLock();
     moveToTile(playerx, playery + dy);
   }
   moveHorizontal(dx: number): void {
-    removeLock(this.keyConfigration.getRemoveStrategy());
+    this.keyConfigration.getremoveLock();
     moveToTile(playerx + dx, playery);
   }
   isEdible(): boolean {
@@ -332,8 +352,7 @@ class Key implements Tile{
     return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.keyConfigration.getColor();
-    //"#ffcc00";
+    this.keyConfigration.setColor(g);
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isPLAYER(): boolean { return false;  }
@@ -345,7 +364,9 @@ class Key implements Tile{
 }
 class Locks implements Tile{
   constructor(private keyConfigration:keyConfigration){}
-
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   updateTile(x: number, y: number): void {
   }
   isStoney(): boolean {
@@ -366,7 +387,7 @@ class Locks implements Tile{
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
 //    g.fillStyle = "#ffcc00";
-    g.fillStyle = this.keyConfigration.getColor();
+    this.keyConfigration.setColor(g);
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isPLAYER(): boolean { return false;  }
@@ -496,14 +517,14 @@ function assertExhausted(tile:RawTile){
 class keyConfigration{
   constructor(private color:string, private is_1:boolean, private removeStrategy:RemoveStrategy){
   }
-  getColor(){
-    return this.color;
-  }
+  setColor(g:CanvasRenderingContext2D) {
+    g.fillStyle = this.color;
+  } 
   is1(){
     return this.is_1;
   }
-  getRemoveStrategy(){
-    return this.removeStrategy;
+  getremoveLock(){
+    removeLock(this.removeStrategy);
   }
 }
 // 인터페이스 생성
@@ -572,10 +593,6 @@ function moveToTile(newx: number, newy: number) {
   playerx = newx;
   playery = newy;
 }
-
-
-
-
 
 /*
   step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
