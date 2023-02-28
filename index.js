@@ -285,9 +285,8 @@ var Box = /** @class */ (function () {
     return Box;
 }());
 var Key = /** @class */ (function () {
-    function Key(removeStrategy, color) {
-        this.removeStrategy = removeStrategy;
-        this.color = color;
+    function Key(keyConfigration) {
+        this.keyConfigration = keyConfigration;
     }
     Key.prototype.updateTile = function (x, y) {
     };
@@ -298,11 +297,11 @@ var Key = /** @class */ (function () {
         return false;
     };
     Key.prototype.moveVertical = function (dy) {
-        removeLock(this.removeStrategy);
+        removeLock(this.keyConfigration.getRemoveStrategy());
         moveToTile(playerx, playery + dy);
     };
     Key.prototype.moveHorizontal = function (dx) {
-        removeLock(this.removeStrategy);
+        removeLock(this.keyConfigration.getRemoveStrategy());
         moveToTile(playerx + dx, playery);
     };
     Key.prototype.isEdible = function () {
@@ -312,7 +311,7 @@ var Key = /** @class */ (function () {
         return false;
     };
     Key.prototype.draw = function (g, x, y) {
-        g.fillStyle = this.color;
+        g.fillStyle = this.keyConfigration.getColor();
         //"#ffcc00";
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
@@ -325,9 +324,8 @@ var Key = /** @class */ (function () {
     return Key;
 }());
 var Locks = /** @class */ (function () {
-    function Locks(color, lock1) {
-        this.color = color;
-        this.lock1 = lock1;
+    function Locks(keyConfigration) {
+        this.keyConfigration = keyConfigration;
     }
     Locks.prototype.updateTile = function (x, y) {
     };
@@ -349,7 +347,7 @@ var Locks = /** @class */ (function () {
     };
     Locks.prototype.draw = function (g, x, y) {
         //    g.fillStyle = "#ffcc00";
-        g.fillStyle = this.color;
+        g.fillStyle = this.keyConfigration.getColor();
         g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
     Locks.prototype.isPLAYER = function () { return false; };
@@ -358,8 +356,8 @@ var Locks = /** @class */ (function () {
     Locks.prototype.isUNBREAKABLE = function () { return false; };
     Locks.prototype.isKEY1 = function () { return false; };
     Locks.prototype.isKEY2 = function () { return false; };
-    Locks.prototype.isLOCK1 = function () { return this.lock1; };
-    Locks.prototype.isLOCK2 = function () { return !this.lock1; };
+    Locks.prototype.isLOCK1 = function () { return this.keyConfigration.is1(); };
+    Locks.prototype.isLOCK2 = function () { return !this.keyConfigration.is1(); };
     return Locks;
 }());
 /*
@@ -473,6 +471,43 @@ var inputs = [];
 function assertExhausted(tile) {
     return new Error("ERROR" + tile);
 }
+var keyConfigration = /** @class */ (function () {
+    function keyConfigration(color, is_1, removeStrategy) {
+        this.color = color;
+        this.is_1 = is_1;
+        this.removeStrategy = removeStrategy;
+    }
+    keyConfigration.prototype.getColor = function () {
+        return this.color;
+    };
+    keyConfigration.prototype.is1 = function () {
+        return this.is_1;
+    };
+    keyConfigration.prototype.getRemoveStrategy = function () {
+        return this.removeStrategy;
+    };
+    return keyConfigration;
+}());
+// 클래스 생성
+var RemoveLock1 = /** @class */ (function () {
+    function RemoveLock1() {
+    }
+    RemoveLock1.prototype.check = function (tile) {
+        return tile.isLOCK1();
+    };
+    return RemoveLock1;
+}());
+// 클래스 생성
+var RemoveLock2 = /** @class */ (function () {
+    function RemoveLock2() {
+    }
+    RemoveLock2.prototype.check = function (tile) {
+        return tile.isLOCK2();
+    };
+    return RemoveLock2;
+}());
+var YELLOW_KEY = new keyConfigration("#ffcc00", true, new RemoveLock1());
+var BLUE_KEY = new keyConfigration("#00ccff", false, new RemoveLock2());
 // 메서드 전문화
 function transtormTile(tile) {
     switch (tile) {
@@ -483,10 +518,10 @@ function transtormTile(tile) {
         case RawTile.FALLING_BOX: return new Box(new Falling());
         case RawTile.FALLING_STONE: return new Stone(new Falling());
         case RawTile.STONE: return new Stone(new Resting());
-        case RawTile.LOCK1: return new Locks("#ffcc00", true);
-        case RawTile.LOCK2: return new Locks("#00ccff", false);
-        case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
-        case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
+        case RawTile.LOCK1: return new Locks(YELLOW_KEY);
+        case RawTile.LOCK2: return new Locks(BLUE_KEY);
+        case RawTile.KEY1: return new Key(YELLOW_KEY);
+        case RawTile.KEY2: return new Key(BLUE_KEY);
         case RawTile.FLUX: return new Flux();
         default: assertExhausted(tile);
     }
@@ -509,24 +544,6 @@ function removeLock(removeStrategy) {
         }
     }
 }
-// 클래스 생성
-var RemoveLock1 = /** @class */ (function () {
-    function RemoveLock1() {
-    }
-    RemoveLock1.prototype.check = function (tile) {
-        return tile.isLOCK1();
-    };
-    return RemoveLock1;
-}());
-// 클래스 생성
-var RemoveLock2 = /** @class */ (function () {
-    function RemoveLock2() {
-    }
-    RemoveLock2.prototype.check = function (tile) {
-        return tile.isLOCK2();
-    };
-    return RemoveLock2;
-}());
 function moveToTile(newx, newy) {
     map[playery][playerx] = new Air();
     map[newy][newx] = new Player();

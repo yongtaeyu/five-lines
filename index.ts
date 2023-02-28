@@ -307,7 +307,7 @@ class Box implements Tile{
 }
 class Key implements Tile{
   
-  constructor(private removeStrategy:RemoveStrategy, private color:string){
+  constructor(private keyConfigration:keyConfigration){
   }
   updateTile(x: number, y: number): void {
   }
@@ -318,11 +318,11 @@ class Key implements Tile{
     return false;
   }
   moveVertical(dy: number): void {
-    removeLock(this.removeStrategy);
+    removeLock(this.keyConfigration.getRemoveStrategy());
     moveToTile(playerx, playery + dy);
   }
   moveHorizontal(dx: number): void {
-    removeLock(this.removeStrategy);
+    removeLock(this.keyConfigration.getRemoveStrategy());
     moveToTile(playerx + dx, playery);
   }
   isEdible(): boolean {
@@ -332,7 +332,7 @@ class Key implements Tile{
     return false;
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.color;
+    g.fillStyle = this.keyConfigration.getColor();
     //"#ffcc00";
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
@@ -344,7 +344,7 @@ class Key implements Tile{
   isLOCK2(): boolean { return false; }
 }
 class Locks implements Tile{
-  constructor(private color:string, private lock1:boolean){}
+  constructor(private keyConfigration:keyConfigration){}
 
   updateTile(x: number, y: number): void {
   }
@@ -366,7 +366,7 @@ class Locks implements Tile{
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
 //    g.fillStyle = "#ffcc00";
-    g.fillStyle = this.color;
+    g.fillStyle = this.keyConfigration.getColor();
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isPLAYER(): boolean { return false;  }
@@ -375,8 +375,8 @@ class Locks implements Tile{
   isUNBREAKABLE(): boolean { return false;  }
   isKEY1(): boolean { return false; }
   isKEY2(): boolean { return false; }
-  isLOCK1(): boolean { return this.lock1; }
-  isLOCK2(): boolean { return !this.lock1; }
+  isLOCK1(): boolean { return this.keyConfigration.is1(); }
+  isLOCK2(): boolean { return !this.keyConfigration.is1(); }
 }
 
 /*
@@ -491,6 +491,43 @@ let inputs: Input[] = [];
 function assertExhausted(tile:RawTile){
   return new Error("ERROR"+tile);
 }
+
+
+class keyConfigration{
+  constructor(private color:string, private is_1:boolean, private removeStrategy:RemoveStrategy){
+  }
+  getColor(){
+    return this.color;
+  }
+  is1(){
+    return this.is_1;
+  }
+  getRemoveStrategy(){
+    return this.removeStrategy;
+  }
+}
+// 인터페이스 생성
+interface RemoveStrategy{
+  check(tile:Tile):boolean;
+}
+
+// 클래스 생성
+class RemoveLock1 implements RemoveStrategy{
+  check(tile: Tile): boolean {
+    return tile.isLOCK1();
+  }
+}
+// 클래스 생성
+class RemoveLock2 implements RemoveStrategy{
+  check(tile: Tile): boolean {
+    return tile.isLOCK2();
+  }
+}
+
+
+const YELLOW_KEY = new keyConfigration("#ffcc00", true , new RemoveLock1());
+const BLUE_KEY   = new keyConfigration("#00ccff", false, new RemoveLock2());
+
 // 메서드 전문화
 function transtormTile(tile: RawTile){
   switch(tile){
@@ -501,10 +538,10 @@ function transtormTile(tile: RawTile){
     case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FALLING_STONE: return new Stone(new Falling());
     case RawTile.STONE: return new Stone(new Resting());
-    case RawTile.LOCK1: return new Locks("#ffcc00", true);
-    case RawTile.LOCK2: return new Locks("#00ccff", false);
-    case RawTile.KEY1: return new Key(new RemoveLock1(), '#ffcc00');
-    case RawTile.KEY2: return new Key(new RemoveLock2(), "#00ccff");
+    case RawTile.LOCK1: return new Locks(YELLOW_KEY);
+    case RawTile.LOCK2: return new Locks(BLUE_KEY);
+    case RawTile.KEY1: return new Key(YELLOW_KEY);
+    case RawTile.KEY2: return new Key(BLUE_KEY);
     case RawTile.FLUX: return new Flux();
     default: assertExhausted(tile);
   }
@@ -528,23 +565,6 @@ function removeLock(removeStrategy:RemoveStrategy) {
     }
   }
 }
-// 인터페이스 생성
-interface RemoveStrategy{
-  check(tile:Tile):boolean;
-}
-
-// 클래스 생성
-class RemoveLock1 implements RemoveStrategy{
-  check(tile: Tile): boolean {
-    return tile.isLOCK1();
-  }
-}
-// 클래스 생성
-class RemoveLock2 implements RemoveStrategy{
-  check(tile: Tile): boolean {
-    return tile.isLOCK2();
-  }
-}
 
 function moveToTile(newx: number, newy: number) {
   map[playery][playerx] = new Air();
@@ -552,6 +572,10 @@ function moveToTile(newx: number, newy: number) {
   playerx = newx;
   playery = newy;
 }
+
+
+
+
 
 /*
   step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
