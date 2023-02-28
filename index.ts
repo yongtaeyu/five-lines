@@ -1,4 +1,3 @@
-
 const TILE_SIZE = 30;
 const FPS = 30;
 const SLEEP = 1000 / FPS;
@@ -22,6 +21,34 @@ interface FallingState{
   moveHorizontal(tile:Tile, dx: number): void,
   drop(tile:Tile, x:number, y:number):void
 }
+/*
+  Player
+*/
+class Player{
+  private x:number = 1;
+  private y:number = 1;
+  
+  public getX(){
+    return this.x;
+  }
+  getY(){
+    return this.y;
+  }
+  setX(x:number){
+    this.x=x;
+  }
+  setY(y:number){
+    this.y=y;
+  }
+  draw(g:CanvasRenderingContext2D){
+    // Draw player
+    g.fillStyle = "#ff0000";
+    g.fillRect(
+        this.x * TILE_SIZE, 
+        this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  }
+}
+let player = new Player();
 
 // 클래스 생성.
 class Falling implements FallingState{
@@ -42,10 +69,10 @@ class Resting implements FallingState{
   drop(tile: Tile, x: number, y: number): void {
   }
   moveHorizontal(tile: Tile, dx: number): void {
-    if(map[playery][playerx + dx + dx].isAIR()
-    && !map[playery + 1][playerx + dx].isAIR()) {
-      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-      moveToTile(playerx + dx, playery);
+    if(map[player.getY()][player.getX() + dx + dx].isAIR()
+    && !map[player.getY() + 1][player.getX() + dx].isAIR()) {
+      map[player.getY()][player.getX() + dx + dx] = map[player.getY()][player.getX() + dx];
+      moveToTile(player.getX() + dx, player.getY());
     }
   }
   isFalling(): boolean {
@@ -80,8 +107,8 @@ interface Tile{
   draw(g:CanvasRenderingContext2D, x:number, y:number):void  ,
   isEdible(): boolean,
   isPushaBle(): boolean,
-  moveHorizontal(dx:number):void,
-  moveVertical(dy:number):void,
+  moveHorizontal(player:Player, dx:number):void,
+  moveVertical(player:Player, dy:number):void,
   updateTile(x:number, y:number):void,
   getBlockOnTopState(): FallingState;
 }
@@ -109,7 +136,7 @@ class FallStrategy {
   메서드 전문화
   step 11 복잡한 if 체인 구문 리팩터링
 */
-class Player implements Tile{
+class PlayerTile implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
@@ -118,9 +145,9 @@ class Player implements Tile{
   isFalling(): boolean {
     return false;
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -148,11 +175,11 @@ class Air implements Tile{
   isFalling(): boolean {
     return false;
   }
-  moveVertical(dy: number): void {
-    moveToTile(playerx, playery + dy);
+  moveVertical(player:Player, dy: number): void {
+    moveToTile(player.getX(), player.getY() + dy);
   }
-  moveHorizontal(dx: number): void {
-    moveToTile(playerx + dx, playery);
+  moveHorizontal(player:Player, dx: number): void {
+    moveToTile(player.getX() + dx, player.getY());
   }
   isEdible(): boolean {
     return true;
@@ -180,9 +207,9 @@ class Unbreakable implements Tile{
   isFalling(): boolean {
     return false;
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -216,11 +243,11 @@ class Flux implements Tile{
   }
   rest(): void {
   }
-  moveVertical(dy: number): void {
-    moveToTile(playerx, playery + dy);
+  moveVertical(player:Player, dy: number): void {
+    moveToTile(player.getX(), player.getY() + dy);
   }
-  moveHorizontal(dx: number): void {
-    moveToTile(playerx + dx, playery);
+  moveHorizontal(player:Player, dx: number): void {
+    moveToTile(player.getX() + dx, player.getY());
   }
   isEdible(): boolean {
     return true;
@@ -254,9 +281,9 @@ class Stone implements Tile{
   updateTile(x: number, y: number): void {
     this.fallStrategy.update(this, x,y);
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
     this.fallStrategy.moveHorizontal(this, dx);
   }
   isEdible(): boolean {
@@ -297,9 +324,9 @@ class Box implements Tile{
   isBoxy(): boolean {
     return true;
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
     this.fallStrategy.moveHorizontal(this, dx);
   }
 
@@ -337,13 +364,13 @@ class Key implements Tile{
   isBoxy(): boolean {
     return false;
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
     this.keyConfigration.getremoveLock();
-    moveToTile(playerx, playery + dy);
+    moveToTile(player.getX(), player.getY() + dy);
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
     this.keyConfigration.getremoveLock();
-    moveToTile(playerx + dx, playery);
+    moveToTile(player.getX() + dx, player.getY());
   }
   isEdible(): boolean {
     return false;
@@ -375,9 +402,9 @@ class Locks implements Tile{
   isBoxy(): boolean {
     return false;
   }
-  moveVertical(dy: number): void {
+  moveVertical(player:Player, dy: number): void {
   }
-  moveHorizontal(dx: number): void {
+  moveHorizontal(player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -399,17 +426,9 @@ class Locks implements Tile{
   isLOCK1(): boolean { return this.keyConfigration.is1(); }
   isLOCK2(): boolean { return !this.keyConfigration.is1(); }
 }
-
-/*
-  input -> RawInput 으로 변경.
-*/
 enum RawInput {
   UP, DOWN, LEFT, RIGHT
 }
-
-// step5. 새로운 인터페이스 생성.
-// Input2 -> Input 으로 다시변경 적용.
-// step6 핸들 메서드 추가.
 interface Input{
   isRight():boolean,
   isLeft():boolean,
@@ -421,7 +440,7 @@ interface Input{
 // step6 handle() 메소드 구현.
 class right implements Input{
   handle(): void {
-    map[playery][playerx + 1].moveHorizontal(1);
+    map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
   }
   isRight(): boolean {
     return true;
@@ -438,7 +457,7 @@ class right implements Input{
 }
 class left implements Input{
   handle(): void {
-    map[playery][playerx + -1].moveHorizontal(-1);
+    map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
   }
   isRight(): boolean {
     return false;
@@ -455,7 +474,7 @@ class left implements Input{
 }
 class up implements Input{
   handle(): void {
-    map[playery-1][playerx].moveVertical(-1);
+    map[player.getY()-1][player.getX()].moveVertical(player, -1);
   }
   isRight(): boolean {
     return false;
@@ -472,7 +491,7 @@ class up implements Input{
 }
 class down implements Input{
   handle(): void {
-    map[playery+1][playerx].moveVertical(1);
+    map[player.getY()+1][player.getX()].moveVertical(player, 1);
   }
   isRight(): boolean {
     return false;
@@ -487,9 +506,6 @@ class down implements Input{
     return true;
   }
 }
-
-let playerx = 1;
-let playery = 1;
 
 // step 8 이름 변경
 let rawMap: RawTile[][] = [
@@ -512,8 +528,6 @@ let inputs: Input[] = [];
 function assertExhausted(tile:RawTile){
   return new Error("ERROR"+tile);
 }
-
-
 class keyConfigration{
   constructor(private color:string, private is_1:boolean, private removeStrategy:RemoveStrategy){
   }
@@ -544,8 +558,6 @@ class RemoveLock2 implements RemoveStrategy{
     return tile.isLOCK2();
   }
 }
-
-
 const YELLOW_KEY = new keyConfigration("#ffcc00", true , new RemoveLock1());
 const BLUE_KEY   = new keyConfigration("#00ccff", false, new RemoveLock2());
 
@@ -553,7 +565,7 @@ const BLUE_KEY   = new keyConfigration("#00ccff", false, new RemoveLock2());
 function transtormTile(tile: RawTile){
   switch(tile){
     case RawTile.AIR: return new Air();
-    case RawTile.PLAYER: return new Player();
+    case RawTile.PLAYER: return new PlayerTile();
     case RawTile.BOX: return new Box(new Resting());
     case RawTile.UNBREAKABLE: return new Unbreakable();
     case RawTile.FALLING_BOX: return new Box(new Falling());
@@ -588,10 +600,10 @@ function removeLock(removeStrategy:RemoveStrategy) {
 }
 
 function moveToTile(newx: number, newy: number) {
-  map[playery][playerx] = new Air();
-  map[newy][newx] = new Player();
-  playerx = newx;
-  playery = newy;
+  map[player.getY()][player.getX()] = new Air();
+  map[newy][newx] = new PlayerTile();
+  player.setX(newx);
+  player.setY(newy);
 }
 
 /*
@@ -668,11 +680,11 @@ function drawMap(g:CanvasRenderingContext2D){
 /*
   step 1
   메소드 쪼개기
-*/
+*/  
 function drawPlayer(g:CanvasRenderingContext2D){
   // Draw player
   g.fillStyle = "#ff0000";
-  g.fillRect(playerx * TILE_SIZE, playery * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  g.fillRect(player.getX() * TILE_SIZE, player.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 
 

@@ -19,6 +19,34 @@ var RawTile;
     RawTile[RawTile["KEY2"] = 10] = "KEY2";
     RawTile[RawTile["LOCK2"] = 11] = "LOCK2";
 })(RawTile || (RawTile = {}));
+/*
+  Player
+*/
+var Player = /** @class */ (function () {
+    function Player() {
+        this.x = 1;
+        this.y = 1;
+    }
+    Player.prototype.getX = function () {
+        return this.x;
+    };
+    Player.prototype.getY = function () {
+        return this.y;
+    };
+    Player.prototype.setX = function (x) {
+        this.x = x;
+    };
+    Player.prototype.setY = function (y) {
+        this.y = y;
+    };
+    Player.prototype.draw = function (g) {
+        // Draw player
+        g.fillStyle = "#ff0000";
+        g.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    };
+    return Player;
+}());
+var player = new Player();
 // 클래스 생성.
 var Falling = /** @class */ (function () {
     function Falling() {
@@ -43,10 +71,10 @@ var Resting = /** @class */ (function () {
     Resting.prototype.drop = function (tile, x, y) {
     };
     Resting.prototype.moveHorizontal = function (tile, dx) {
-        if (map[playery][playerx + dx + dx].isAIR()
-            && !map[playery + 1][playerx + dx].isAIR()) {
-            map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-            moveToTile(playerx + dx, playery);
+        if (map[player.getY()][player.getX() + dx + dx].isAIR()
+            && !map[player.getY() + 1][player.getX() + dx].isAIR()) {
+            map[player.getY()][player.getX() + dx + dx] = map[player.getY()][player.getX() + dx];
+            moveToTile(player.getX() + dx, player.getY());
         }
     };
     Resting.prototype.isFalling = function () {
@@ -76,38 +104,38 @@ var FallStrategy = /** @class */ (function () {
   메서드 전문화
   step 11 복잡한 if 체인 구문 리팩터링
 */
-var Player = /** @class */ (function () {
-    function Player() {
+var PlayerTile = /** @class */ (function () {
+    function PlayerTile() {
     }
-    Player.prototype.getBlockOnTopState = function () {
+    PlayerTile.prototype.getBlockOnTopState = function () {
         return new Resting();
     };
-    Player.prototype.updateTile = function (x, y) {
+    PlayerTile.prototype.updateTile = function (x, y) {
     };
-    Player.prototype.isFalling = function () {
+    PlayerTile.prototype.isFalling = function () {
         return false;
     };
-    Player.prototype.moveVertical = function (dy) {
+    PlayerTile.prototype.moveVertical = function (player, dy) {
     };
-    Player.prototype.moveHorizontal = function (dx) {
+    PlayerTile.prototype.moveHorizontal = function (player, dx) {
     };
-    Player.prototype.isEdible = function () {
+    PlayerTile.prototype.isEdible = function () {
         return false;
     };
-    Player.prototype.isPushaBle = function () {
+    PlayerTile.prototype.isPushaBle = function () {
         return false;
     };
-    Player.prototype.draw = function (g, x, y) {
+    PlayerTile.prototype.draw = function (g, x, y) {
     };
-    Player.prototype.isPLAYER = function () { return false; };
-    Player.prototype.isAIR = function () { return false; };
-    Player.prototype.isFLUX = function () { return false; };
-    Player.prototype.isUNBREAKABLE = function () { return false; };
-    Player.prototype.isKEY1 = function () { return false; };
-    Player.prototype.isKEY2 = function () { return false; };
-    Player.prototype.isLOCK1 = function () { return false; };
-    Player.prototype.isLOCK2 = function () { return false; };
-    return Player;
+    PlayerTile.prototype.isPLAYER = function () { return false; };
+    PlayerTile.prototype.isAIR = function () { return false; };
+    PlayerTile.prototype.isFLUX = function () { return false; };
+    PlayerTile.prototype.isUNBREAKABLE = function () { return false; };
+    PlayerTile.prototype.isKEY1 = function () { return false; };
+    PlayerTile.prototype.isKEY2 = function () { return false; };
+    PlayerTile.prototype.isLOCK1 = function () { return false; };
+    PlayerTile.prototype.isLOCK2 = function () { return false; };
+    return PlayerTile;
 }());
 var Air = /** @class */ (function () {
     function Air() {
@@ -120,11 +148,11 @@ var Air = /** @class */ (function () {
     Air.prototype.isFalling = function () {
         return false;
     };
-    Air.prototype.moveVertical = function (dy) {
-        moveToTile(playerx, playery + dy);
+    Air.prototype.moveVertical = function (player, dy) {
+        moveToTile(player.getX(), player.getY() + dy);
     };
-    Air.prototype.moveHorizontal = function (dx) {
-        moveToTile(playerx + dx, playery);
+    Air.prototype.moveHorizontal = function (player, dx) {
+        moveToTile(player.getX() + dx, player.getY());
     };
     Air.prototype.isEdible = function () {
         return true;
@@ -155,9 +183,9 @@ var Unbreakable = /** @class */ (function () {
     Unbreakable.prototype.isFalling = function () {
         return false;
     };
-    Unbreakable.prototype.moveVertical = function (dy) {
+    Unbreakable.prototype.moveVertical = function (player, dy) {
     };
-    Unbreakable.prototype.moveHorizontal = function (dx) {
+    Unbreakable.prototype.moveHorizontal = function (player, dx) {
     };
     Unbreakable.prototype.isEdible = function () {
         return false;
@@ -194,11 +222,11 @@ var Flux = /** @class */ (function () {
     };
     Flux.prototype.rest = function () {
     };
-    Flux.prototype.moveVertical = function (dy) {
-        moveToTile(playerx, playery + dy);
+    Flux.prototype.moveVertical = function (player, dy) {
+        moveToTile(player.getX(), player.getY() + dy);
     };
-    Flux.prototype.moveHorizontal = function (dx) {
-        moveToTile(playerx + dx, playery);
+    Flux.prototype.moveHorizontal = function (player, dx) {
+        moveToTile(player.getX() + dx, player.getY());
     };
     Flux.prototype.isEdible = function () {
         return true;
@@ -231,9 +259,9 @@ var Stone = /** @class */ (function () {
     Stone.prototype.updateTile = function (x, y) {
         this.fallStrategy.update(this, x, y);
     };
-    Stone.prototype.moveVertical = function (dy) {
+    Stone.prototype.moveVertical = function (player, dy) {
     };
-    Stone.prototype.moveHorizontal = function (dx) {
+    Stone.prototype.moveHorizontal = function (player, dx) {
         this.fallStrategy.moveHorizontal(this, dx);
     };
     Stone.prototype.isEdible = function () {
@@ -273,9 +301,9 @@ var Box = /** @class */ (function () {
     Box.prototype.isBoxy = function () {
         return true;
     };
-    Box.prototype.moveVertical = function (dy) {
+    Box.prototype.moveVertical = function (player, dy) {
     };
-    Box.prototype.moveHorizontal = function (dx) {
+    Box.prototype.moveHorizontal = function (player, dx) {
         this.fallStrategy.moveHorizontal(this, dx);
     };
     Box.prototype.isEdible = function () {
@@ -313,13 +341,13 @@ var Key = /** @class */ (function () {
     Key.prototype.isBoxy = function () {
         return false;
     };
-    Key.prototype.moveVertical = function (dy) {
+    Key.prototype.moveVertical = function (player, dy) {
         this.keyConfigration.getremoveLock();
-        moveToTile(playerx, playery + dy);
+        moveToTile(player.getX(), player.getY() + dy);
     };
-    Key.prototype.moveHorizontal = function (dx) {
+    Key.prototype.moveHorizontal = function (player, dx) {
         this.keyConfigration.getremoveLock();
-        moveToTile(playerx + dx, playery);
+        moveToTile(player.getX() + dx, player.getY());
     };
     Key.prototype.isEdible = function () {
         return false;
@@ -354,9 +382,9 @@ var Locks = /** @class */ (function () {
     Locks.prototype.isBoxy = function () {
         return false;
     };
-    Locks.prototype.moveVertical = function (dy) {
+    Locks.prototype.moveVertical = function (player, dy) {
     };
-    Locks.prototype.moveHorizontal = function (dx) {
+    Locks.prototype.moveHorizontal = function (player, dx) {
     };
     Locks.prototype.isEdible = function () {
         return false;
@@ -379,9 +407,6 @@ var Locks = /** @class */ (function () {
     Locks.prototype.isLOCK2 = function () { return !this.keyConfigration.is1(); };
     return Locks;
 }());
-/*
-  input -> RawInput 으로 변경.
-*/
 var RawInput;
 (function (RawInput) {
     RawInput[RawInput["UP"] = 0] = "UP";
@@ -395,7 +420,7 @@ var right = /** @class */ (function () {
     function right() {
     }
     right.prototype.handle = function () {
-        map[playery][playerx + 1].moveHorizontal(1);
+        map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
     };
     right.prototype.isRight = function () {
         return true;
@@ -415,7 +440,7 @@ var left = /** @class */ (function () {
     function left() {
     }
     left.prototype.handle = function () {
-        map[playery][playerx + -1].moveHorizontal(-1);
+        map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
     };
     left.prototype.isRight = function () {
         return false;
@@ -435,7 +460,7 @@ var up = /** @class */ (function () {
     function up() {
     }
     up.prototype.handle = function () {
-        map[playery - 1][playerx].moveVertical(-1);
+        map[player.getY() - 1][player.getX()].moveVertical(player, -1);
     };
     up.prototype.isRight = function () {
         return false;
@@ -455,7 +480,7 @@ var down = /** @class */ (function () {
     function down() {
     }
     down.prototype.handle = function () {
-        map[playery + 1][playerx].moveVertical(1);
+        map[player.getY() + 1][player.getX()].moveVertical(player, 1);
     };
     down.prototype.isRight = function () {
         return false;
@@ -471,8 +496,6 @@ var down = /** @class */ (function () {
     };
     return down;
 }());
-var playerx = 1;
-var playery = 1;
 // step 8 이름 변경
 var rawMap = [
     [2, 2, 2, 2, 2, 2, 2, 2],
@@ -531,7 +554,7 @@ var BLUE_KEY = new keyConfigration("#00ccff", false, new RemoveLock2());
 function transtormTile(tile) {
     switch (tile) {
         case RawTile.AIR: return new Air();
-        case RawTile.PLAYER: return new Player();
+        case RawTile.PLAYER: return new PlayerTile();
         case RawTile.BOX: return new Box(new Resting());
         case RawTile.UNBREAKABLE: return new Unbreakable();
         case RawTile.FALLING_BOX: return new Box(new Falling());
@@ -564,10 +587,10 @@ function removeLock(removeStrategy) {
     }
 }
 function moveToTile(newx, newy) {
-    map[playery][playerx] = new Air();
-    map[newy][newx] = new Player();
-    playerx = newx;
-    playery = newy;
+    map[player.getY()][player.getX()] = new Air();
+    map[newy][newx] = new PlayerTile();
+    player.setX(newx);
+    player.setY(newy);
 }
 /*
   step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
@@ -641,7 +664,7 @@ function drawMap(g) {
 function drawPlayer(g) {
     // Draw player
     g.fillStyle = "#ff0000";
-    g.fillRect(playerx * TILE_SIZE, playery * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    g.fillRect(player.getX() * TILE_SIZE, player.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 function gameLoop() {
     var before = Date.now();
