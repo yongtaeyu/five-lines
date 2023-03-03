@@ -18,8 +18,8 @@ enum RawTile {
 interface FallingState{
   isFalling(): boolean,
   isResting(): boolean,
-  moveHorizontal(tile:Tile, dx: number): void,
-  drop(tile:Tile, x:number, y:number):void
+  moveHorizontal(map:Map, tile:Tile, dx: number): void,
+  drop(map:Map, tile:Tile, x:number, y:number):void
 }
 /*
   Player
@@ -34,26 +34,28 @@ class Player{
         this.x * TILE_SIZE, 
         this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
-  moveHorizontal(dx: number) {
-    map.getMap()[this.y][this.x + dx].moveHorizontal(this, dx);
+  moveHorizontal(map:Map, dx: number) {
+    map.moveHorizontal(this, this.x, this.y, dx);    
   }
-  moveVertical(dy: number) {
-    map.getMap()[this.y + dy][this.x].moveVertical(this, dy);
+  moveVertical(map:Map, dy: number) {
+    map.moveVertical(this, this.x, this.y, dy);    
   }
-  move(dx:number, dy:number){
-    this.moveToTile(this.x + dx, this.y + dy);
+  move(map:Map, dx:number, dy:number){
+    this.moveToTile(map, this.x + dx, this.y + dy);
   }
-  moveToTile(newx: number, newy: number) {
-    map.getMap()[this.y][this.x] = new Air();
-    map.getMap()[newy][newx] = new PlayerTile();
+  moveToTile(map:Map, newx: number, newy: number) {
+    map.movePlayer(newx, newy, this.x, this.y);
     this.x = newx;
     this.y = newy;
   }
-  pushHorizontal(tile: Tile, dx: number){
-    if(map.getMap()[this.y][this.x + dx + dx].isAIR()
-    && !map.getMap()[this.y + 1][this.x + dx].isAIR()) {
-      map.getMap()[this.y][this.x + dx + dx] = map.getMap()[this.y][this.x + dx];
-      this.moveToTile(this.x + dx, this.y);
+  pushHorizontal(map:Map, tile: Tile, dx: number){
+   if(map.isAir(this.y, this.x + dx + dx)
+    && !map.isAir(this.y + 1, this.x + dx)
+    ){
+      map.setTitle(
+        this.y,  this.x + dx + dx, this.x + dx
+      );
+      this.moveToTile(map, this.x + dx, this.y);
     }
   }
 }
@@ -61,11 +63,11 @@ let player = new Player();
 
 // 클래스 생성.
 class Falling implements FallingState{
-  drop(tile: Tile, x: number, y: number): void {
-    map.getMap()[y + 1][x] = tile;
-    map.getMap()[y][x] = new Air();
+  drop(map:Map, tile: Tile, x: number, y: number): void {
+    map.drop(tile, x, y);
+
   }
-  moveHorizontal(tile: Tile, dx: number): void {
+  moveHorizontal(map:Map, tile: Tile, dx: number): void {
   }
   isFalling(): boolean {
     return true;
@@ -75,10 +77,10 @@ class Falling implements FallingState{
   }
 }
 class Resting implements FallingState{
-  drop(tile: Tile, x: number, y: number): void {
+  drop(map:Map, tile: Tile, x: number, y: number): void {
   }
-  moveHorizontal(tile: Tile, dx: number): void {
-    player.pushHorizontal(tile, dx);
+  moveHorizontal(map:Map, tile: Tile, dx: number): void {
+    player.pushHorizontal(map, tile, dx);
   }
   isFalling(): boolean {
     return false;
@@ -99,46 +101,39 @@ interface Tile{
   draw(g:CanvasRenderingContext2D, x:number, y:number):void  ,
   isEdible(): boolean,
   isPushaBle(): boolean,
-  moveHorizontal(player:Player, dx:number):void,
-  moveVertical(player:Player, dy:number):void,
-  updateTile(x:number, y:number):void,
+  moveHorizontal(map:Map, player:Player, dx:number):void,
+  moveVertical(map:Map, player:Player, dy:number):void,
+  updateTile(map:Map, x:number, y:number):void,
   getBlockOnTopState(): FallingState;
 }
-// 새로운 클래스 생성.
-class FallStrategy {
 
+class FallStrategy {
   private falling:FallingState;
   constructor(falling:FallingState){
     this.falling = falling;
   }
-
-  update(tile:Tile, x:number, y:number){
-    this.falling = map.getMap()[y + 1][x].getBlockOnTopState();
-    this.falling.drop(tile,x,y); 
+  update(map:Map, tile:Tile, x:number, y:number){
+    this.falling = map.blockOnTopState(x, y);
+    this.falling.drop(map, tile,x,y); 
   }
 
-  moveHorizontal(tile:Tile, dx:number){
-    this.falling.moveHorizontal(tile, dx);
+  moveHorizontal(map:Map, tile:Tile, dx:number){
+    this.falling.moveHorizontal(map, tile, dx);
   }
 }
 
-/*
-  클래스들 생성.
-  메서드 전문화
-  step 11 복잡한 if 체인 구문 리팩터링
-*/
 class PlayerTile implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isFalling(): boolean {
     return false;
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map, player:Player, dy: number): void {
   }
-  moveHorizontal(player:Player, dx: number): void {
+  moveHorizontal(map:Map, player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -161,16 +156,16 @@ class Air implements Tile{
   getBlockOnTopState(): FallingState {
     return new Falling();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isFalling(): boolean {
     return false;
   }
-  moveVertical(player:Player, dy: number): void {
-    player.move(0, dy);
+  moveVertical(map:Map, player:Player, dy: number): void {
+    player.move(map, 0, dy);
   }
-  moveHorizontal(player:Player, dx: number): void {
-    player.move(dx, 0);
+  moveHorizontal(map:Map, player:Player, dx: number): void {
+    player.move(map, dx, 0);
   }
   isEdible(): boolean {
     return true;
@@ -193,14 +188,14 @@ class Unbreakable implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isFalling(): boolean {
     return false;
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map, player:Player, dy: number): void {
   }
-  moveHorizontal(player:Player, dx: number): void {
+  moveHorizontal(map:Map, player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -225,7 +220,7 @@ class Flux implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isFalling(): boolean {
     return false;
@@ -234,11 +229,11 @@ class Flux implements Tile{
   }
   rest(): void {
   }
-  moveVertical(player:Player, dy: number): void {
-    player.move(0, dy);
+  moveVertical(map:Map, player:Player, dy: number): void {
+    player.move(map,0, dy);
   }
-  moveHorizontal(player:Player, dx: number): void {
-    player.move(dx, 0);
+  moveHorizontal(map:Map, player:Player, dx: number): void {
+    player.move(map, dx, 0);
   }
   isEdible(): boolean {
     return true;
@@ -269,13 +264,13 @@ class Stone implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
-    this.fallStrategy.update(this, x,y);
+  updateTile(map:Map, x: number, y: number): void {
+    this.fallStrategy.update(map, this, x,y);
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map, player:Player, dy: number): void {
   }
-  moveHorizontal(player:Player, dx: number): void {
-    this.fallStrategy.moveHorizontal(this, dx);
+  moveHorizontal(map:Map, player:Player, dx: number): void {
+    this.fallStrategy.moveHorizontal(map, this, dx);
   }
   isEdible(): boolean {
     return false;
@@ -306,8 +301,8 @@ class Box implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
-    this.fallStrategy.update(this, x,y);
+  updateTile(map:Map, x: number, y: number): void {
+    this.fallStrategy.update(map,this, x,y);
   }
   isStoney(): boolean {
     return false;
@@ -315,10 +310,10 @@ class Box implements Tile{
   isBoxy(): boolean {
     return true;
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map, player:Player, dy: number): void {
   }
-  moveHorizontal(player:Player, dx: number): void {
-    this.fallStrategy.moveHorizontal(this, dx);
+  moveHorizontal(map:Map, player:Player, dx: number): void {
+    this.fallStrategy.moveHorizontal(map, this, dx);
   }
 
   isEdible(): boolean {
@@ -347,7 +342,7 @@ class Key implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isStoney(): boolean {
     return false;
@@ -355,13 +350,13 @@ class Key implements Tile{
   isBoxy(): boolean {
     return false;
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map, player:Player, dy: number): void {
     this.keyConfigration.getremoveLock();
-    player.move(0, dy);
+    player.move(map, 0, dy);
   }
-  moveHorizontal(player:Player, dx: number): void {
+  moveHorizontal(map:Map, player:Player, dx: number): void {
     this.keyConfigration.getremoveLock();
-    player.move(dx, 0);
+    player.move(map, dx, 0);
   }
   isEdible(): boolean {
     return false;
@@ -385,7 +380,7 @@ class Locks implements Tile{
   getBlockOnTopState(): FallingState {
     return new Resting();
   }
-  updateTile(x: number, y: number): void {
+  updateTile(map:Map, x: number, y: number): void {
   }
   isStoney(): boolean {
     return false;
@@ -393,9 +388,9 @@ class Locks implements Tile{
   isBoxy(): boolean {
     return false;
   }
-  moveVertical(player:Player, dy: number): void {
+  moveVertical(map:Map,player:Player, dy: number): void {
   }
-  moveHorizontal(player:Player, dx: number): void {
+  moveHorizontal(map:Map,player:Player, dx: number): void {
   }
   isEdible(): boolean {
     return false;
@@ -427,11 +422,9 @@ interface Input{
   isDown():boolean,
   handle(player:Player):void
 }
-// step5 새로운 클래스 생성.
-// step6 handle() 메소드 구현.
 class right implements Input{
   handle(player:Player): void {
-    player.moveHorizontal(1);
+    player.moveHorizontal(map, 1);
   }
   isRight(): boolean {
     return true;
@@ -448,7 +441,7 @@ class right implements Input{
 }
 class left implements Input{
   handle(player:Player): void {
-    player.moveHorizontal(-1);
+    player.moveHorizontal(map, -1);
   }
   isRight(): boolean {
     return false;
@@ -465,7 +458,7 @@ class left implements Input{
 }
 class up implements Input{
   handle(player:Player): void {
-    player.moveVertical(-1);
+    player.moveVertical(map, -1);
   }
   isRight(): boolean {
     return false;
@@ -482,7 +475,7 @@ class up implements Input{
 }
 class down implements Input{
   handle(player:Player): void {
-    player.moveVertical(1);
+    player.moveVertical(map, 1);
   }
   isRight(): boolean {
     return false;
@@ -511,45 +504,72 @@ let rawMap: RawTile[][] = [
 
 class Map{
   private map: Tile[][];
-  getMap(){
-    return this.map;
+
+  constructor(){
   }
-  setMap(map:Tile[][]){
-    this.map = map;
+
+  moveHorizontal(player:Player, x:number, y:number, dx:number){
+    this.map[y][x + dx].moveHorizontal(this, player, dx);
   }
-  
+  moveVertical(player:Player, x:number, y:number, dy:number){
+    this.map[y + dy][x].moveVertical(this, player, dy);
+  }
   transtorm(){
-    map.setMap(new Array(rawMap.length));
+    this.map = new Array(rawMap.length);
     for (let y = 0; y < rawMap.length; y++) {
-      map.getMap()[y] = new Array(rawMap[y].length);
+      this.map[y] = new Array(rawMap[y].length);
       for (let x = 0; x < rawMap[y].length; x++) {
-        map.getMap()[y][x] = transtormTile(rawMap[y][x]);  
+        this.map[y][x] = transtormTile(rawMap[y][x]);  
       }   
     }
   }
   update(){
-    for (let y = map.getMap().length - 1; y >= 0; y--) {
-      for (let x = 0; x < map.getMap()[y].length; x++) {
-        map.getMap()[y][x].updateTile(x,y);
+    for (let y = this.map.length - 1; y >= 0; y--) {
+      for (let x = 0; x < this.map[y].length; x++) {
+        this.map[y][x].updateTile(this, x,y);
       }
     }
   }
   draw(g:CanvasRenderingContext2D){
     // Draw map
-    for (let y = 0; y < map.getMap().length; y++) {
-      for (let x = 0; x < map.getMap()[y].length; x++) {
-        map.getMap()[y][x].draw(g, x, y); 
+    for (let y = 0; y < this.map.length; y++) {
+      for (let x = 0; x < this.map[y].length; x++) {
+        this.map[y][x].draw(g, x, y); 
       }
     }
   }
+  remove(removeStrategy:RemoveStrategy){
+    for (let y = 0; y < this.map.length; y++) {
+      for (let x = 0; x < this.map[y].length; x++) {
+        if (removeStrategy.check(this.map[y][x])) {
+          this.map[y][x] = new Air();
+        }
+      }
+    }
+  }
+  
+  movePlayer(newx: number, newy: number, x: number, y: number) {
+    this.map[y][x] = new Air();
+    this.map[newy][newx] = new PlayerTile();
+  }
+  isAir(y:number, x:number){
+    return this.map[y][x].isAIR()
+  }
+  setTitle(y: number, x1: number, x2: number) {
+    this.map[y][x1] = this.map[y][x2];
+  }
+
+  blockOnTopState(x: number, y: number){
+    return this.map[y + 1][x].getBlockOnTopState();
+  }
+  drop(tile: Tile, x: number, y: number) {
+    this.map[y + 1][x] = tile;
+    this.map[y][x] = new Air();
+  }
 }
 
-// map 변경
-//let map: Tile[][];
 let map = new Map();
 
-
-//let inputs: Input[] = [];
 let inputs: Input[] = [];
 
 // 메서드 전문화
@@ -566,7 +586,7 @@ class keyConfigration{
     return this.is_1;
   }
   getremoveLock(){
-    removeLock(this.removeStrategy);
+    map.remove(this.removeStrategy);
   }
 }
 // 인터페이스 생성
@@ -605,16 +625,6 @@ function transtormTile(tile: RawTile){
     case RawTile.KEY2: return new Key(BLUE_KEY);
     case RawTile.FLUX: return new Flux();
     default: assertExhausted(tile);
-  }
-}
-
-function removeLock(removeStrategy:RemoveStrategy) {
-  for (let y = 0; y < map.getMap().length; y++) {
-    for (let x = 0; x < map.getMap()[y].length; x++) {
-      if (removeStrategy.check(map.getMap()[y][x])) {
-        map.getMap()[y][x] = new Air();
-      }
-    }
   }
 }
 
@@ -667,8 +677,6 @@ const UP_KEY = "ArrowUp";
 const RIGHT_KEY = "ArrowRight";
 const DOWN_KEY = "ArrowDown";
 
-// step5 input을 클래스로 변경.
-// 
 window.addEventListener("keydown", e => {
   if (e.key === LEFT_KEY || e.key === "a") inputs.push(new left());
   else if (e.key === UP_KEY || e.key === "w") inputs.push(new up());
