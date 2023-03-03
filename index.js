@@ -632,7 +632,7 @@ function draw() {
       메소드 쪼개기
     */
     drawMap(g);
-    drawPlayer(g);
+    player.draw(g);
 }
 /*
   step 2
@@ -656,15 +656,6 @@ function drawMap(g) {
             map[y][x].draw(g, x, y);
         }
     }
-}
-/*
-  step 1
-  메소드 쪼개기
-*/
-function drawPlayer(g) {
-    // Draw player
-    g.fillStyle = "#ff0000";
-    g.fillRect(player.getX() * TILE_SIZE, player.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 function gameLoop() {
     var before = Date.now();
