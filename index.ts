@@ -35,24 +35,24 @@ class Player{
         this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   moveHorizontal(dx: number) {
-    map[this.y][this.x + dx].moveHorizontal(this, dx);
+    map.getMap()[this.y][this.x + dx].moveHorizontal(this, dx);
   }
   moveVertical(dy: number) {
-    map[this.y + dy][this.x].moveVertical(this, dy);
+    map.getMap()[this.y + dy][this.x].moveVertical(this, dy);
   }
   move(dx:number, dy:number){
     this.moveToTile(this.x + dx, this.y + dy);
   }
   moveToTile(newx: number, newy: number) {
-    map[this.y][this.x] = new Air();
-    map[newy][newx] = new PlayerTile();
+    map.getMap()[this.y][this.x] = new Air();
+    map.getMap()[newy][newx] = new PlayerTile();
     this.x = newx;
     this.y = newy;
   }
   pushHorizontal(tile: Tile, dx: number){
-    if(map[this.y][this.x + dx + dx].isAIR()
-    && !map[this.y + 1][this.x + dx].isAIR()) {
-      map[this.y][this.x + dx + dx] = map[this.y][this.x + dx];
+    if(map.getMap()[this.y][this.x + dx + dx].isAIR()
+    && !map.getMap()[this.y + 1][this.x + dx].isAIR()) {
+      map.getMap()[this.y][this.x + dx + dx] = map.getMap()[this.y][this.x + dx];
       this.moveToTile(this.x + dx, this.y);
     }
   }
@@ -62,8 +62,8 @@ let player = new Player();
 // 클래스 생성.
 class Falling implements FallingState{
   drop(tile: Tile, x: number, y: number): void {
-      map[y + 1][x] = tile;
-      map[y][x] = new Air();
+    map.getMap()[y + 1][x] = tile;
+    map.getMap()[y][x] = new Air();
   }
   moveHorizontal(tile: Tile, dx: number): void {
   }
@@ -113,7 +113,7 @@ class FallStrategy {
   }
 
   update(tile:Tile, x:number, y:number){
-    this.falling = map[y + 1][x].getBlockOnTopState();
+    this.falling = map.getMap()[y + 1][x].getBlockOnTopState();
     this.falling.drop(tile,x,y); 
   }
 
@@ -509,11 +509,44 @@ let rawMap: RawTile[][] = [
 ];
 
 
-class Map{}
-
+class Map{
+  private map: Tile[][];
+  getMap(){
+    return this.map;
+  }
+  setMap(map:Tile[][]){
+    this.map = map;
+  }
+  
+  transtorm(){
+    map.setMap(new Array(rawMap.length));
+    for (let y = 0; y < rawMap.length; y++) {
+      map.getMap()[y] = new Array(rawMap[y].length);
+      for (let x = 0; x < rawMap[y].length; x++) {
+        map.getMap()[y][x] = transtormTile(rawMap[y][x]);  
+      }   
+    }
+  }
+  update(){
+    for (let y = map.getMap().length - 1; y >= 0; y--) {
+      for (let x = 0; x < map.getMap()[y].length; x++) {
+        map.getMap()[y][x].updateTile(x,y);
+      }
+    }
+  }
+  draw(g:CanvasRenderingContext2D){
+    // Draw map
+    for (let y = 0; y < map.getMap().length; y++) {
+      for (let x = 0; x < map.getMap()[y].length; x++) {
+        map.getMap()[y][x].draw(g, x, y); 
+      }
+    }
+  }
+}
 
 // map 변경
-let map: Tile[][];
+//let map: Tile[][];
+let map = new Map();
 
 
 //let inputs: Input[] = [];
@@ -574,21 +607,12 @@ function transtormTile(tile: RawTile){
     default: assertExhausted(tile);
   }
 }
-function transtormMap(){
-  map = new Array(rawMap.length);
-  for (let y = 0; y < rawMap.length; y++) {
-    map[y] = new Array(rawMap[y].length);
-    for (let x = 0; x < rawMap[y].length; x++) {
-      map[y][x] = transtormTile(rawMap[y][x]);  
-    }   
-  }
-}
 
 function removeLock(removeStrategy:RemoveStrategy) {
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      if (removeStrategy.check(map[y][x])) {
-        map[y][x] = new Air();
+  for (let y = 0; y < map.getMap().length; y++) {
+    for (let x = 0; x < map.getMap()[y].length; x++) {
+      if (removeStrategy.check(map.getMap()[y][x])) {
+        map.getMap()[y][x] = new Air();
       }
     }
   }
@@ -596,7 +620,7 @@ function removeLock(removeStrategy:RemoveStrategy) {
 
 function update() {
   handleInputs(); // 
-  updateMap();
+  map.update();
 }
 
 function handleInputs(){
@@ -606,21 +630,9 @@ function handleInputs(){
   }
 }
 
-function updateMap(){
-  for (let y = map.length - 1; y >= 0; y--) {
-    for (let x = 0; x < map[y].length; x++) {
-      map[y][x].updateTile(x,y);
-    }
-  }
-}
 function draw() {
-  // step 2
   let g = createGraphice();
-  /*
-    step 1
-    메소드 쪼개기
-  */
-  drawMap(g);
+  map.draw(g);
   player.draw(g);
 }
 
@@ -635,20 +647,6 @@ function createGraphice(){
   return g;
 }
 
-/*
-  step 1 메소드 쪼개기
-  step 7 if문 colorOfTile ()메소드 추출
-  step 10 메소드 인라인화
-*/
-function drawMap(g:CanvasRenderingContext2D){
-  // Draw map
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      map[y][x].draw(g, x, y); 
-    }
-  }
-}
-
 function gameLoop() {
   let before = Date.now();
   update();
@@ -660,7 +658,7 @@ function gameLoop() {
 }
 
 window.onload = () => {
-  transtormMap();
+  map.transtorm();
   gameLoop();
 }
 

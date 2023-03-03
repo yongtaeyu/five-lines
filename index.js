@@ -33,24 +33,24 @@ var Player = /** @class */ (function () {
         g.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     };
     Player.prototype.moveHorizontal = function (dx) {
-        map[this.y][this.x + dx].moveHorizontal(this, dx);
+        map.getMap()[this.y][this.x + dx].moveHorizontal(this, dx);
     };
     Player.prototype.moveVertical = function (dy) {
-        map[this.y + dy][this.x].moveVertical(this, dy);
+        map.getMap()[this.y + dy][this.x].moveVertical(this, dy);
     };
     Player.prototype.move = function (dx, dy) {
         this.moveToTile(this.x + dx, this.y + dy);
     };
     Player.prototype.moveToTile = function (newx, newy) {
-        map[this.y][this.x] = new Air();
-        map[newy][newx] = new PlayerTile();
+        map.getMap()[this.y][this.x] = new Air();
+        map.getMap()[newy][newx] = new PlayerTile();
         this.x = newx;
         this.y = newy;
     };
     Player.prototype.pushHorizontal = function (tile, dx) {
-        if (map[this.y][this.x + dx + dx].isAIR()
-            && !map[this.y + 1][this.x + dx].isAIR()) {
-            map[this.y][this.x + dx + dx] = map[this.y][this.x + dx];
+        if (map.getMap()[this.y][this.x + dx + dx].isAIR()
+            && !map.getMap()[this.y + 1][this.x + dx].isAIR()) {
+            map.getMap()[this.y][this.x + dx + dx] = map.getMap()[this.y][this.x + dx];
             this.moveToTile(this.x + dx, this.y);
         }
     };
@@ -62,8 +62,8 @@ var Falling = /** @class */ (function () {
     function Falling() {
     }
     Falling.prototype.drop = function (tile, x, y) {
-        map[y + 1][x] = tile;
-        map[y][x] = new Air();
+        map.getMap()[y + 1][x] = tile;
+        map.getMap()[y][x] = new Air();
     };
     Falling.prototype.moveHorizontal = function (tile, dx) {
     };
@@ -97,7 +97,7 @@ var FallStrategy = /** @class */ (function () {
         this.falling = falling;
     }
     FallStrategy.prototype.update = function (tile, x, y) {
-        this.falling = map[y + 1][x].getBlockOnTopState();
+        this.falling = map.getMap()[y + 1][x].getBlockOnTopState();
         this.falling.drop(tile, x, y);
     };
     FallStrategy.prototype.moveHorizontal = function (tile, dx) {
@@ -514,10 +514,41 @@ var rawMap = [
 var Map = /** @class */ (function () {
     function Map() {
     }
+    Map.prototype.getMap = function () {
+        return this.map;
+    };
+    Map.prototype.setMap = function (map) {
+        this.map = map;
+    };
+    Map.prototype.transtorm = function () {
+        map.setMap(new Array(rawMap.length));
+        for (var y = 0; y < rawMap.length; y++) {
+            map.getMap()[y] = new Array(rawMap[y].length);
+            for (var x = 0; x < rawMap[y].length; x++) {
+                map.getMap()[y][x] = transtormTile(rawMap[y][x]);
+            }
+        }
+    };
+    Map.prototype.update = function () {
+        for (var y = map.getMap().length - 1; y >= 0; y--) {
+            for (var x = 0; x < map.getMap()[y].length; x++) {
+                map.getMap()[y][x].updateTile(x, y);
+            }
+        }
+    };
+    Map.prototype.draw = function (g) {
+        // Draw map
+        for (var y = 0; y < map.getMap().length; y++) {
+            for (var x = 0; x < map.getMap()[y].length; x++) {
+                map.getMap()[y][x].draw(g, x, y);
+            }
+        }
+    };
     return Map;
 }());
 // map 변경
-var map;
+//let map: Tile[][];
+var map = new Map();
 //let inputs: Input[] = [];
 var inputs = [];
 // 메서드 전문화
@@ -579,27 +610,18 @@ function transtormTile(tile) {
         default: assertExhausted(tile);
     }
 }
-function transtormMap() {
-    map = new Array(rawMap.length);
-    for (var y = 0; y < rawMap.length; y++) {
-        map[y] = new Array(rawMap[y].length);
-        for (var x = 0; x < rawMap[y].length; x++) {
-            map[y][x] = transtormTile(rawMap[y][x]);
-        }
-    }
-}
 function removeLock(removeStrategy) {
-    for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[y].length; x++) {
-            if (removeStrategy.check(map[y][x])) {
-                map[y][x] = new Air();
+    for (var y = 0; y < map.getMap().length; y++) {
+        for (var x = 0; x < map.getMap()[y].length; x++) {
+            if (removeStrategy.check(map.getMap()[y][x])) {
+                map.getMap()[y][x] = new Air();
             }
         }
     }
 }
 function update() {
     handleInputs(); // 
-    updateMap();
+    map.update();
 }
 function handleInputs() {
     while (inputs.length > 0) {
@@ -607,21 +629,9 @@ function handleInputs() {
         current.handle(player);
     }
 }
-function updateMap() {
-    for (var y = map.length - 1; y >= 0; y--) {
-        for (var x = 0; x < map[y].length; x++) {
-            map[y][x].updateTile(x, y);
-        }
-    }
-}
 function draw() {
-    // step 2
     var g = createGraphice();
-    /*
-      step 1
-      메소드 쪼개기
-    */
-    drawMap(g);
+    map.draw(g);
     player.draw(g);
 }
 /*
@@ -634,19 +644,6 @@ function createGraphice() {
     g.clearRect(0, 0, canvas.width, canvas.height);
     return g;
 }
-/*
-  step 1 메소드 쪼개기
-  step 7 if문 colorOfTile ()메소드 추출
-  step 10 메소드 인라인화
-*/
-function drawMap(g) {
-    // Draw map
-    for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[y].length; x++) {
-            map[y][x].draw(g, x, y);
-        }
-    }
-}
 function gameLoop() {
     var before = Date.now();
     update();
@@ -657,7 +654,7 @@ function gameLoop() {
     setTimeout(function () { return gameLoop(); }, sleep);
 }
 window.onload = function () {
-    transtormMap();
+    map.transtorm();
     gameLoop();
 };
 var LEFT_KEY = "ArrowLeft";
