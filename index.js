@@ -27,22 +27,32 @@ var Player = /** @class */ (function () {
         this.x = 1;
         this.y = 1;
     }
-    Player.prototype.getX = function () {
-        return this.x;
-    };
-    Player.prototype.getY = function () {
-        return this.y;
-    };
-    Player.prototype.setX = function (x) {
-        this.x = x;
-    };
-    Player.prototype.setY = function (y) {
-        this.y = y;
-    };
     Player.prototype.draw = function (g) {
         // Draw player
         g.fillStyle = "#ff0000";
         g.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    };
+    Player.prototype.moveHorizontal = function (dx) {
+        map[this.y][this.x + dx].moveHorizontal(this, dx);
+    };
+    Player.prototype.moveVertical = function (dy) {
+        map[this.y + dy][this.x].moveVertical(this, dy);
+    };
+    Player.prototype.move = function (dx, dy) {
+        this.moveToTile(this.x + dx, this.y + dy);
+    };
+    Player.prototype.moveToTile = function (newx, newy) {
+        map[this.y][this.x] = new Air();
+        map[newy][newx] = new PlayerTile();
+        this.x = newx;
+        this.y = newy;
+    };
+    Player.prototype.pushHorizontal = function (tile, dx) {
+        if (map[this.y][this.x + dx + dx].isAIR()
+            && !map[this.y + 1][this.x + dx].isAIR()) {
+            map[this.y][this.x + dx + dx] = map[this.y][this.x + dx];
+            this.moveToTile(this.x + dx, this.y);
+        }
     };
     return Player;
 }());
@@ -71,11 +81,7 @@ var Resting = /** @class */ (function () {
     Resting.prototype.drop = function (tile, x, y) {
     };
     Resting.prototype.moveHorizontal = function (tile, dx) {
-        if (map[player.getY()][player.getX() + dx + dx].isAIR()
-            && !map[player.getY() + 1][player.getX() + dx].isAIR()) {
-            map[player.getY()][player.getX() + dx + dx] = map[player.getY()][player.getX() + dx];
-            moveToTile(player.getX() + dx, player.getY());
-        }
+        player.pushHorizontal(tile, dx);
     };
     Resting.prototype.isFalling = function () {
         return false;
@@ -149,10 +155,10 @@ var Air = /** @class */ (function () {
         return false;
     };
     Air.prototype.moveVertical = function (player, dy) {
-        moveToTile(player.getX(), player.getY() + dy);
+        player.move(0, dy);
     };
     Air.prototype.moveHorizontal = function (player, dx) {
-        moveToTile(player.getX() + dx, player.getY());
+        player.move(dx, 0);
     };
     Air.prototype.isEdible = function () {
         return true;
@@ -223,10 +229,10 @@ var Flux = /** @class */ (function () {
     Flux.prototype.rest = function () {
     };
     Flux.prototype.moveVertical = function (player, dy) {
-        moveToTile(player.getX(), player.getY() + dy);
+        player.move(0, dy);
     };
     Flux.prototype.moveHorizontal = function (player, dx) {
-        moveToTile(player.getX() + dx, player.getY());
+        player.move(dx, 0);
     };
     Flux.prototype.isEdible = function () {
         return true;
@@ -343,11 +349,11 @@ var Key = /** @class */ (function () {
     };
     Key.prototype.moveVertical = function (player, dy) {
         this.keyConfigration.getremoveLock();
-        moveToTile(player.getX(), player.getY() + dy);
+        player.move(0, dy);
     };
     Key.prototype.moveHorizontal = function (player, dx) {
         this.keyConfigration.getremoveLock();
-        moveToTile(player.getX() + dx, player.getY());
+        player.move(dx, 0);
     };
     Key.prototype.isEdible = function () {
         return false;
@@ -419,8 +425,8 @@ var RawInput;
 var right = /** @class */ (function () {
     function right() {
     }
-    right.prototype.handle = function () {
-        map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
+    right.prototype.handle = function (player) {
+        player.moveHorizontal(1);
     };
     right.prototype.isRight = function () {
         return true;
@@ -439,8 +445,8 @@ var right = /** @class */ (function () {
 var left = /** @class */ (function () {
     function left() {
     }
-    left.prototype.handle = function () {
-        map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
+    left.prototype.handle = function (player) {
+        player.moveHorizontal(-1);
     };
     left.prototype.isRight = function () {
         return false;
@@ -459,8 +465,8 @@ var left = /** @class */ (function () {
 var up = /** @class */ (function () {
     function up() {
     }
-    up.prototype.handle = function () {
-        map[player.getY() - 1][player.getX()].moveVertical(player, -1);
+    up.prototype.handle = function (player) {
+        player.moveVertical(-1);
     };
     up.prototype.isRight = function () {
         return false;
@@ -479,8 +485,8 @@ var up = /** @class */ (function () {
 var down = /** @class */ (function () {
     function down() {
     }
-    down.prototype.handle = function () {
-        map[player.getY() + 1][player.getX()].moveVertical(player, 1);
+    down.prototype.handle = function (player) {
+        player.moveVertical(1);
     };
     down.prototype.isRight = function () {
         return false;
@@ -505,6 +511,11 @@ var rawMap = [
     [2, 4, 1, 1, 1, 9, 0, 2],
     [2, 2, 2, 2, 2, 2, 2, 2],
 ];
+var Map = /** @class */ (function () {
+    function Map() {
+    }
+    return Map;
+}());
 // map 변경
 var map;
 //let inputs: Input[] = [];
@@ -586,37 +597,16 @@ function removeLock(removeStrategy) {
         }
     }
 }
-function moveToTile(newx, newy) {
-    map[player.getY()][player.getX()] = new Air();
-    map[newy][newx] = new PlayerTile();
-    player.setX(newx);
-    player.setY(newy);
-}
-/*
-  step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
-*/
 function update() {
     handleInputs(); // 
     updateMap();
 }
-/*
-  step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
-  1 그룹
-  step 4 함수 중간에 있는 if문을 하나의 메소드로 분리
-  step 6 메소드 삭제 및 handle 메소드 사용으로 변경.
-*/
 function handleInputs() {
     while (inputs.length > 0) {
         var current = inputs.pop();
-        current.handle();
-        //  handleInput(current);
+        current.handle(player);
     }
 }
-/*
-  step 3 update 메소드가 2개의 일을 동시에 하기 때문에 분리함.
-  2 그룹
-  step 4 함수 중간에 있는 if문을 하나의 메소드로 분리
-*/
 function updateMap() {
     for (var y = map.length - 1; y >= 0; y--) {
         for (var x = 0; x < map[y].length; x++) {
