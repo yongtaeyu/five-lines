@@ -4,21 +4,31 @@ var SLEEP = 1000 / FPS;
 /*
   step 7 Tile -> RawTile 이름 변경.
 */
-var RawTile;
-(function (RawTile) {
-    RawTile[RawTile["AIR"] = 0] = "AIR";
-    RawTile[RawTile["FLUX"] = 1] = "FLUX";
-    RawTile[RawTile["UNBREAKABLE"] = 2] = "UNBREAKABLE";
-    RawTile[RawTile["PLAYER"] = 3] = "PLAYER";
-    RawTile[RawTile["STONE"] = 4] = "STONE";
-    RawTile[RawTile["FALLING_STONE"] = 5] = "FALLING_STONE";
-    RawTile[RawTile["BOX"] = 6] = "BOX";
-    RawTile[RawTile["FALLING_BOX"] = 7] = "FALLING_BOX";
-    RawTile[RawTile["KEY1"] = 8] = "KEY1";
-    RawTile[RawTile["LOCK1"] = 9] = "LOCK1";
-    RawTile[RawTile["KEY2"] = 10] = "KEY2";
-    RawTile[RawTile["LOCK2"] = 11] = "LOCK2";
-})(RawTile || (RawTile = {}));
+var RawTile2;
+(function (RawTile2) {
+    RawTile2[RawTile2["AIR"] = 0] = "AIR";
+    RawTile2[RawTile2["FLUX"] = 1] = "FLUX";
+    RawTile2[RawTile2["UNBREAKABLE"] = 2] = "UNBREAKABLE";
+    RawTile2[RawTile2["PLAYER"] = 3] = "PLAYER";
+    RawTile2[RawTile2["STONE"] = 4] = "STONE";
+    RawTile2[RawTile2["FALLING_STONE"] = 5] = "FALLING_STONE";
+    RawTile2[RawTile2["BOX"] = 6] = "BOX";
+    RawTile2[RawTile2["FALLING_BOX"] = 7] = "FALLING_BOX";
+    RawTile2[RawTile2["KEY1"] = 8] = "KEY1";
+    RawTile2[RawTile2["LOCK1"] = 9] = "LOCK1";
+    RawTile2[RawTile2["KEY2"] = 10] = "KEY2";
+    RawTile2[RawTile2["LOCK2"] = 11] = "LOCK2";
+})(RawTile2 || (RawTile2 = {}));
+var RAW_TILE = [
+    RawTile2.AIR,
+    RawTile2.FLUX,
+    RawTile2.UNBREAKABLE,
+    RawTile2.PLAYER,
+    RawTile2.STONE, RawTile2.FALLING_STONE,
+    RawTile2.BOX, RawTile2.FALLING_BOX,
+    RawTile2.KEY1, RawTile2.KEY2,
+    RawTile2.LOCK1, RawTile2.LOCK2
+];
 /*
   Player
 */
@@ -503,6 +513,13 @@ var rawMap = [
 ];
 var Map = /** @class */ (function () {
     function Map() {
+        this.map = new Array(rawMap.length);
+        for (var y = 0; y < rawMap.length; y++) {
+            this.map[y] = new Array(rawMap[y].length);
+            for (var x = 0; x < rawMap[y].length; x++) {
+                this.map[y][x] = transtormTile(RAW_TILE[rawMap[y][x]]);
+            }
+        }
     }
     Map.prototype.moveHorizontal = function (player, x, y, dx) {
         this.map[y][x + dx].moveHorizontal(this, player, dx);
@@ -608,18 +625,18 @@ var BLUE_KEY = new keyConfigration("#00ccff", false, new RemoveLock2());
 // 메서드 전문화
 function transtormTile(tile) {
     switch (tile) {
-        case RawTile.AIR: return new Air();
-        case RawTile.PLAYER: return new PlayerTile();
-        case RawTile.BOX: return new Box(new Resting());
-        case RawTile.UNBREAKABLE: return new Unbreakable();
-        case RawTile.FALLING_BOX: return new Box(new Falling());
-        case RawTile.FALLING_STONE: return new Stone(new Falling());
-        case RawTile.STONE: return new Stone(new Resting());
-        case RawTile.LOCK1: return new Locks(YELLOW_KEY);
-        case RawTile.LOCK2: return new Locks(BLUE_KEY);
-        case RawTile.KEY1: return new Key(YELLOW_KEY);
-        case RawTile.KEY2: return new Key(BLUE_KEY);
-        case RawTile.FLUX: return new Flux();
+        case RawTile2.AIR: return new Air();
+        case RawTile2.PLAYER: return new PlayerTile();
+        case RawTile2.BOX: return new Box(new Resting());
+        case RawTile2.UNBREAKABLE: return new Unbreakable();
+        case RawTile2.FALLING_BOX: return new Box(new Falling());
+        case RawTile2.FALLING_STONE: return new Stone(new Falling());
+        case RawTile2.STONE: return new Stone(new Resting());
+        case RawTile2.LOCK1: return new Locks(YELLOW_KEY);
+        case RawTile2.LOCK2: return new Locks(BLUE_KEY);
+        case RawTile2.KEY1: return new Key(YELLOW_KEY);
+        case RawTile2.KEY2: return new Key(BLUE_KEY);
+        case RawTile2.FLUX: return new Flux();
         default: assertExhausted(tile);
     }
 }
